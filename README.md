@@ -1,4 +1,4 @@
-# Projeto de Férias
+# Social Network
 
 Projeto Web Full-Stack para adquirir/aprimorar habilidades em Desenvolvimento Web, utilizando tecnologias como JavaScript, React, entre outros.
 
