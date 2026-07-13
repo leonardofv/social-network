@@ -55,8 +55,8 @@ export class AuthService {
     password: string;
     password2: string;
     username?: string;
-  }): Promise<RegisterUserPayload | undefined> {
-    const res = await fetch('http://localhost:3000/auth/register', {
+  }): Promise<RegisterUserPayload> {
+    const res = await fetch(`${API_URL}/auth/register`, {
       body: JSON.stringify({
         email,
         password,
@@ -71,14 +71,10 @@ export class AuthService {
 
     const data = await res.json();
 
-    if (res.status === 400) {
-      alert(data.message);
-      return;
-    }
-
-    if (res.status === 500) {
-      alert('Something went wrong!');
-      return;
+    if (!res.ok) {
+      throw new Error(
+        res.status === 400 ? data.message : 'Algo deu errado. Tente novamente.',
+      );
     }
 
     return data;
