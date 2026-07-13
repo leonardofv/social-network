@@ -22,7 +22,7 @@ export class AuthService {
   static async login(
     emailOrUsername: string,
     password: string,
-  ): Promise<LoginUserPayload | undefined> {
+  ): Promise<LoginUserPayload> {
     const res = await fetch(`${API_URL}/auth/login`, {
       body: JSON.stringify({
         emailOrUsername,
@@ -36,14 +36,10 @@ export class AuthService {
 
     const data = await res.json();
 
-    if (res.status === 400) {
-      alert(data.message);
-      return;
-    }
-
-    if (res.status === 500) {
-      alert('Something went wrong!');
-      return;
+    if (!res.ok) {
+      throw new Error(
+        res.status === 400 ? data.message : 'Algo deu errado. Tente novamente.',
+      );
     }
 
     return data;

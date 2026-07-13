@@ -6,6 +6,17 @@
 const tintColorLight = '#0a7ea4';
 const tintColorDark = '#fff';
 
+export const Brand = {
+  primary: '#ff4d6d',
+  primaryDark: '#e63e5c',
+  surface: '#ffffff',
+  background: '#fff0f3',
+  text: '#2b2b2b',
+  textMuted: '#8a8a8a',
+  border: '#e5e0e2',
+  error: '#d0342c',
+};
+
 export const Colors = {
   light: {
     text: '#11181C',
