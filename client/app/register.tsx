@@ -13,7 +13,6 @@ import { PrimaryButton } from '@/components/ui/PrimaryButton';
 import { TextField } from '@/components/ui/TextField';
 import { Brand } from '@/constants/Colors';
 import { AuthService } from '@/services/auth.service';
-import { storeToken } from '@/utils';
 
 export default function RegisterScreen() {
   const router = useRouter();
@@ -39,14 +38,13 @@ export default function RegisterScreen() {
     setError('');
     setLoading(true);
     try {
-      const { token } = await AuthService.register({
+      await AuthService.register({
         email: email.trim(),
         password,
         password2,
         username: username.trim(),
       });
-      await storeToken(token);
-      router.replace('/(tabs)');
+      router.replace('/login');
     } catch (err) {
       setError(
         err instanceof Error ? err.message : 'Não foi possível conectar.',
