@@ -32,3 +32,29 @@ export const findByEmailOrUsername = async (
 
   return user;
 };
+
+export type UserProfile = {
+  id: number;
+  email: string;
+  username?: string;
+  name: string | null;
+  profilePicture: string | null;
+  bio: string | null;
+};
+
+export const findProfileById = async (
+  id: number,
+): Promise<UserProfile | null> => {
+  const user = await db('users')
+    .leftJoin('user_profile', 'users.id', 'user_profile.user_id')
+    .column('users.id', 'users.email', 'users.username', {
+      name: 'user_profile.name',
+      profilePicture: 'user_profile.profile_picture',
+      bio: 'user_profile.bio',
+    })
+    .where('users.id', id)
+    .first();
+
+  return user ?? null;
+};
+

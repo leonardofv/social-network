@@ -2,6 +2,7 @@ import express from 'express';
 import cors from 'cors';
 
 import authRoutes from './routes/auth.routes';
+import userRoutes from './routes/user.routes';
 import postRoutes from './routes/post.routes';
 
 const app = express();
@@ -15,6 +16,7 @@ app.get('/', (_, res) => {
 });
 
 app.use('/auth', authRoutes);
+app.use('/users', userRoutes);
 app.use('/posts', postRoutes);
 
 app.listen(PORT, () =>
