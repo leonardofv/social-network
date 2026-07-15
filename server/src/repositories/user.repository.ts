@@ -4,20 +4,21 @@ export type User = {
   id: number;
   email: string;
   password: string;
-  username?: string;
+  username: string;
 };
 
 export const create = async ({
   email,
   password,
   username,
-}: Omit<User, 'id'>): Promise<User> => {
+  name,
+}: Omit<User, 'id'> & { name: string }): Promise<User> => {
   const [user] = await db
     .insert({ email, password, username })
     .into('users')
     .returning(['id', 'email', 'username', 'password']);
 
-  await db.insert({ user_id: user.id }).into('user_profile');
+  await db.insert({ user_id: user.id, name }).into('user_profile');
 
   return user;
 };
@@ -36,8 +37,8 @@ export const findByEmailOrUsername = async (
 export type UserProfile = {
   id: number;
   email: string;
-  username?: string;
-  name: string | null;
+  username: string;
+  name: string;
   profilePicture: string | null;
   bio: string | null;
 };

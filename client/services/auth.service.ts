@@ -47,11 +47,13 @@ export class AuthService {
 
   static async register({
     email,
+    name,
     password,
     password2,
     username,
   }: {
     email: string;
+    name: string;
     password: string;
     password2: string;
     username?: string;
@@ -59,6 +61,7 @@ export class AuthService {
     const res = await fetch(`${API_URL}/auth/register`, {
       body: JSON.stringify({
         email,
+        name,
         password,
         password2,
         username,

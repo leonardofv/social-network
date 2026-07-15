@@ -13,7 +13,12 @@ type DatabaseError = { constraint: string };
 
 // Register User
 router.post('/register', async (req, res) => {
-  const { email, password, password2, username } = req.body;
+  const { email, password, password2, username, name } = req.body;
+
+  if (!email?.trim() || !username?.trim() || !name?.trim() || !password || !password2) {
+    res.status(400).json({ message: 'All fields are required' });
+    return;
+  }
 
   if (password !== password2) {
     res.status(400).json({ message: 'Passwords must match' });
@@ -27,6 +32,7 @@ router.post('/register', async (req, res) => {
       email,
       password: hashedPassword,
       username,
+      name
     });
 
     const token = jwt.sign({ id: user.id }, JWT_SECRET);

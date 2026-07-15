@@ -7,8 +7,8 @@ if (!API_URL) throw new Error('EXPO_PUBLIC_API_URL does not exists');
 export type UserProfile = {
     id: number;
     email: string;
-    username?: string;
-    name: string | null;
+    username: string;
+    name: string;
     profilePicture: string | null;
     bio: string | null;
 };

@@ -53,7 +53,7 @@ export default function ProfileScreen() {
   return (
     <View style={styles.container}>
       <Text style={styles.name}>{user?.name ?? user?.username}</Text>
-      <Text style={styles.email}>{user?.email}</Text>
+      <Text style={styles.email}>{user?.username}</Text>
     </View>
   );
 }

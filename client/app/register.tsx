@@ -18,6 +18,7 @@ export default function RegisterScreen() {
   const router = useRouter();
 
   const [username, setUsername] = useState('');
+  const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [password2, setPassword2] = useState('');
@@ -25,7 +26,13 @@ export default function RegisterScreen() {
   const [loading, setLoading] = useState(false);
 
   const registerUser = async () => {
-    if (!username.trim() || !email.trim() || !password || !password2) {
+    if (
+      !name.trim() ||
+      !username.trim() ||
+      !email.trim() ||
+      !password ||
+      !password2
+    ) {
       setError('Preencha todos os campos.');
       return;
     }
@@ -40,6 +47,7 @@ export default function RegisterScreen() {
     try {
       await AuthService.register({
         email: email.trim(),
+        name: name.trim(),
         password,
         password2,
         username: username.trim(),
@@ -76,6 +84,14 @@ export default function RegisterScreen() {
           <View style={styles.card}>
             <Text style={styles.title}>Crie sua conta</Text>
 
+            <TextField
+              label="Nome"
+              icon="person-outline"
+              value={name}
+              onChangeText={setName}
+              autoCapitalize="words"
+              returnKeyType="next"
+            />
             <TextField
               label="Nome de usuário"
               icon="person-outline"

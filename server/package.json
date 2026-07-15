@@ -7,7 +7,8 @@
     "dev": "nodemon src/index.ts",
     "test": "echo \"Error: no test specified\" && exit 1",
     "migrate:latest": "knex migrate:latest",
-    "migrate:reset": "knex migrate:rollback --all"
+    "migrate:reset": "knex migrate:rollback --all",
+    "migrate:make": "knex migrate:make"
   },
   "keywords": [],
   "author": "",
