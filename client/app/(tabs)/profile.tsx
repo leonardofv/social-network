@@ -3,55 +3,100 @@ import { UserProfile, UserService } from '@/services/user.service';
 import { clearToken } from '@/utils';
 import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
+import {
+  ActivityIndicator,
+  Image,
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
+import * as ImagePicker from 'expo-image-picker';
 
 export default function ProfileScreen() {
+  const [user, setUser] = useState<UserProfile | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
-  const [ user, setUser ] = useState<UserProfile | null>(null);
-  const [ loading, setLoading ] = useState(true);
-  const [ error, setError ] = useState('');
-  
   const router = useRouter();
 
-  useEffect(() => {
+  const API_URL = process.env.EXPO_PUBLIC_API_URL;
 
+  useEffect(() => {
     const loadProfile = async () => {
       try {
         const { data } = await UserService.getMe();
         setUser(data);
-      }catch(error) {
-        if (error instanceof Error && error.message.includes('Sessão expirada')) {
+      } catch (error) {
+        if (
+          error instanceof Error &&
+          error.message.includes('Sessão expirada')
+        ) {
           await clearToken();
           router.replace('/login');
           return;
         }
-        setError(error instanceof Error ? error.message : 'Não foi possível conectar');
+        setError(
+          error instanceof Error ? error.message : 'Não foi possível conectar',
+        );
       } finally {
         setLoading(false);
       }
     };
 
     loadProfile();
-  },[]);
+  }, []);
 
   if (loading) {
     return (
       <View style={styles.center}>
         <ActivityIndicator size="large" color={Brand.primary} />
       </View>
-    )
-  };
+    );
+  }
 
   if (error) {
     return (
       <View style={styles.center}>
         <Text style={styles.error}>{error}</Text>
       </View>
-    )
+    );
+  }
+
+  const pickImage = async () => {
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ['images'],
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 0.7,
+    });
+
+    if (result.canceled) return;
+
+    try {
+      const { profilePicture } = await UserService.uploadProfilePicture(
+        result.assets[0].uri,
+      );
+      setUser((prev) => (prev ? { ...prev, profilePicture } : prev));
+    } catch {
+      setError('Não foi possível enviar a foto');
+    }
   };
 
   return (
     <View style={styles.container}>
+      <Pressable onPress={pickImage}>
+        {user?.profilePicture ? (
+          <Image
+            source={{ uri: `${API_URL}${user.profilePicture}` }}
+            style={styles.avatar}
+          />
+        ) : (
+          <View style={[styles.avatar, styles.avatarPlaceholder]}>
+            <Text style={styles.avatarInitial}>{user?.name?.[0] ?? '?'}</Text>
+          </View>
+        )}
+      </Pressable>
       <Text style={styles.name}>{user?.name ?? user?.username}</Text>
       <Text style={styles.email}>{user?.username}</Text>
     </View>
@@ -94,5 +139,20 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: Brand.error,
     textAlign: 'center',
+  },
+  avatar: {
+    width: 96,
+    height: 96,
+    borderRadius: 48,
+  },
+  avatarPlaceholder: {
+    backgroundColor: Brand.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  avatarInitial: {
+    fontFamily: 'LatoBold',
+    fontSize: 36,
+    color: '#fff',
   },
 });

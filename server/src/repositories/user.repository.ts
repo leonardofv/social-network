@@ -59,3 +59,13 @@ export const findProfileById = async (
   return user ?? null;
 };
 
+export const updateProfilePicture = async (
+  userId: number,
+  profilePicture: string,
+): Promise<void> => {
+  await db('user_profile')
+    .where('user_id', userId)
+    .update('profile_picture', profilePicture);
+}
+
+
