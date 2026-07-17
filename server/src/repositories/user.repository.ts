@@ -61,7 +61,7 @@ export const findProfileById = async (
 
 export const updateProfilePicture = async (
   userId: number,
-  profilePicture: string,
+  profilePicture: string | null,
 ): Promise<void> => {
   await db('user_profile')
     .where('user_id', userId)

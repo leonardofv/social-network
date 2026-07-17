@@ -5,7 +5,9 @@ import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
+  Alert,
   Image,
+  Platform,
   Pressable,
   StyleSheet,
   Text,
@@ -89,9 +91,41 @@ export default function ProfileScreen() {
     }
   };
 
+  const removePicture = async () => {
+    setUploading(true);
+    try {
+      await UserService.deleteProfilePicture();
+      setUser((prev) => (prev ? { ...prev, profilePicture: null } : prev));
+    } catch {
+      setError('Não foi possível remover a foto');
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const onAvatarPress = () => {
+    
+    if (!user?.profilePicture) {
+      pickImage();
+      return
+    }
+
+    if (Platform.OS === 'web') {
+      const remove = window.confirm('Remover a foto de perfil ?');
+      if (remove) removePicture();
+      return;
+    };
+
+    Alert.alert('Foto de perfil', undefined, [
+      { text: 'Alterar foto', onPress: pickImage },
+      { text: 'Remover foto', style: 'destructive', onPress: removePicture },
+      { text: 'Cancelar', style: 'cancel' },
+    ]);
+  };
+
   return (
     <View style={styles.container}>
-      <Pressable onPress={pickImage} disabled={uploading}>
+      <Pressable onPress={onAvatarPress} disabled={uploading}>
         {user?.profilePicture ? (
           <Image
             source={{ uri: `${API_URL}${user.profilePicture}` }}
