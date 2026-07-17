@@ -12,10 +12,12 @@ import {
   View,
 } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
+import { Ionicons } from '@expo/vector-icons';
 
 export default function ProfileScreen() {
   const [user, setUser] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
+  const [uploading, setUploading] = useState(false);
   const [error, setError] = useState('');
 
   const router = useRouter();
@@ -73,6 +75,8 @@ export default function ProfileScreen() {
 
     if (result.canceled) return;
 
+    setUploading(true);
+
     try {
       const { profilePicture } = await UserService.uploadProfilePicture(
         result.assets[0].uri,
@@ -80,12 +84,14 @@ export default function ProfileScreen() {
       setUser((prev) => (prev ? { ...prev, profilePicture } : prev));
     } catch {
       setError('Não foi possível enviar a foto');
+    } finally {
+      setUploading(false);
     }
   };
 
   return (
     <View style={styles.container}>
-      <Pressable onPress={pickImage}>
+      <Pressable onPress={pickImage} disabled={uploading}>
         {user?.profilePicture ? (
           <Image
             source={{ uri: `${API_URL}${user.profilePicture}` }}
@@ -96,6 +102,13 @@ export default function ProfileScreen() {
             <Text style={styles.avatarInitial}>{user?.name?.[0] ?? '?'}</Text>
           </View>
         )}
+        <View style={styles.cameraBadge}>
+          {uploading ? (
+            <ActivityIndicator size="small" color="#fff" />
+          ) : (
+            <Ionicons name="camera" size={16} color="#fff" />
+          )}
+        </View>
       </Pressable>
       <Text style={styles.name}>{user?.name ?? user?.username}</Text>
       <Text style={styles.email}>{user?.username}</Text>
@@ -154,5 +167,18 @@ const styles = StyleSheet.create({
     fontFamily: 'LatoBold',
     fontSize: 36,
     color: '#fff',
+  },
+  cameraBadge: {
+    position: 'absolute',
+    bottom: 0,
+    right: 0,
+    backgroundColor: Brand.primary,
+    borderRadius: 14,
+    width: 28,
+    height: 28,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 2,
+    borderColor: Brand.background,
   },
 });
