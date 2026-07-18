@@ -13,14 +13,16 @@ export const create = async ({
   username,
   name,
 }: Omit<User, 'id'> & { name: string }): Promise<User> => {
-  const [user] = await db
-    .insert({ email, password, username })
-    .into('users')
-    .returning(['id', 'email', 'username', 'password']);
-
-  await db.insert({ user_id: user.id, name }).into('user_profile');
-
-  return user;
+  return db.transaction(async (trx) => {
+    const [user] = await trx
+      .insert({ email, password, username })
+      .into('users')
+      .returning(['id', 'email', 'username', 'password']);
+  
+    await trx.insert({ user_id: user.id, name }).into('user_profile');
+  
+    return user;
+  });
 };
 
 export const findByEmailOrUsername = async (
