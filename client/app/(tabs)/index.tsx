@@ -15,7 +15,7 @@ export default function HomeScreen() {
   const [posts, setPosts] = useState<Post[]>([]);
   const navigation = useNavigation<any>(); // eslint-disable-line
 
-  const counterRef = useRef<NodeJS.Timeout>();
+  const counterRef = useRef<NodeJS.Timeout | undefined>(undefined);
 
   useEffect(() => {
     const fetchPosts = async (token: string) => {

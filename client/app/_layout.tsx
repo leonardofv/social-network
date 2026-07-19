@@ -2,10 +2,9 @@ import {
   DarkTheme,
   DefaultTheme,
   ThemeProvider,
-  useNavigation,
 } from '@react-navigation/native';
+import { router, Stack } from 'expo-router';
 import { useFonts } from 'expo-font';
-import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
@@ -24,14 +23,14 @@ export default function RootLayout() {
     Lato: require('../assets/fonts/Lato-Regular.ttf'),
     LatoBold: require('../assets/fonts/Lato-Bold.ttf'),
   });
-  const navigation = useNavigation<any>(); // eslint-disable-line
 
   useEffect(() => {
+    if (!loaded) return;
+
     getToken().then((token) => {
-      if (token) return;
-      navigation.navigate('login');
+      if (!token) router.replace('/login');
     });
-  }, []);
+  }, [loaded]);
 
   useEffect(() => {
     if (loaded) {
