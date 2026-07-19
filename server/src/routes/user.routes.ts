@@ -31,15 +31,15 @@ router.put('/me/picture', authMiddleware, upload.single('picture'), async (req: 
         }
         // busca perfil para saber caminho da foto antiga
         const current = await userRepository.findProfileById(req.userId!);
+        
+        const profilePicture = `/uploads/${req.file.filename}`;
+        await userRepository.updateProfilePicture(req.userId!, profilePicture);
 
-        //apaga arquivo do disco
+        //apaga arquivo do disco depois que o banco aponta para a nova
         if (current?.profilePicture) {
             const oldPath = path.resolve(__dirname, '../../uploads', path.basename(current.profilePicture));
             await fs.unlink(oldPath).catch(() => {});
         };
-
-        const profilePicture = `/uploads/${req.file.filename}`;
-        await userRepository.updateProfilePicture(req.userId!, profilePicture)
         
         res.status(200).json({ message: 'OK ✅', data: { profilePicture }});
     } catch(error) {
@@ -57,12 +57,12 @@ router.delete('/me/picture', authMiddleware, async (req: AuthenticatedRequest, r
             return;
         };
 
+        await userRepository.updateProfilePicture(req.userId!, null);
+        
         const filePath = path.resolve(__dirname, '../../uploads', path.basename(user.profilePicture));
         await fs.unlink(filePath).catch(() => {});
 
-        await userRepository.updateProfilePicture(req.userId!, null);
         res.status(200).json({ message: 'OK ✅', data: { profilePicture: null } });
-
     } catch(error) {
         console.log(error);
         res.status(500).json({ message: 'Something went wrong 😢❌' });
