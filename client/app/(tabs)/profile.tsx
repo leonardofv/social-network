@@ -112,23 +112,21 @@ export default function ProfileScreen() {
   };
 
   const onAvatarPress = () => {
-    
-    if (!user?.profilePicture) {
+    if (!user?.profilePicture || Platform.OS === 'web') {
       pickImage();
-      return
-    }
-
-    if (Platform.OS === 'web') {
-      const remove = window.confirm('Remover a foto de perfil ?');
-      if (remove) removePicture();
       return;
-    };
+    }
 
     Alert.alert('Foto de perfil', undefined, [
       { text: 'Alterar foto', onPress: pickImage },
       { text: 'Remover foto', style: 'destructive', onPress: removePicture },
       { text: 'Cancelar', style: 'cancel' },
     ]);
+  };
+
+  const onRemovePress = () => {
+    const confirmed = window.confirm('Remover a foto de perfil ?');
+    if (confirmed) removePicture();
   };
 
   return (
@@ -152,6 +150,11 @@ export default function ProfileScreen() {
           )}
         </View>
       </Pressable>
+      {Platform.OS === 'web' && user?.profilePicture && (
+        <Pressable onPress={onRemovePress} disabled={uploading}>
+          <Text style={styles.removePhoto}>Remover foto</Text>
+        </Pressable>
+      )}
       <Text style={styles.name}>{user?.name ?? user?.username}</Text>
       <Text style={styles.email}>{user?.username}</Text>
     </View>
@@ -222,5 +225,10 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     borderWidth: 2,
     borderColor: Brand.background,
+  },
+  removePhoto: {
+    fontFamily: 'Lato',
+    fontSize: 14,
+    color: Brand.error,
   },
 });
