@@ -92,8 +92,8 @@ export default function ProfileScreen() {
         result.assets[0].uri,
       );
       setUser((prev) => (prev ? { ...prev, profilePicture } : prev));
-    } catch {
-      showError('Não foi possível enviar a foto');
+    } catch(error) {
+      showError(error instanceof Error ? error.message : 'Não foi possível enviar a foto');
     } finally {
       setUploading(false);
     }

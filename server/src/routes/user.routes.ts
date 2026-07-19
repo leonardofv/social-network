@@ -1,7 +1,7 @@
-import { Router } from "express";
+import { Response, Router } from "express";
 import * as userRepository from '../repositories/user.repository';
 import { authMiddleware, type AuthenticatedRequest } from '../middlewares/auth.middleware';
-import { upload } from "../middlewares/upload.middleware";
+import { upload, uploadErrorHandler } from "../middlewares/upload.middleware";
 import path from "path";
 import fs from 'fs/promises';
 
@@ -23,10 +23,10 @@ router.get('/me', authMiddleware, async (req: AuthenticatedRequest, res) => {
     }
 });
 
-router.put('/me/picture', authMiddleware, upload.single('picture'), async (req: AuthenticatedRequest, res) => {
+router.put('/me/picture', authMiddleware, upload.single('picture'), uploadErrorHandler, async (req: AuthenticatedRequest, res: Response) => {
     try {
         if (!req.file) {
-            res.status(400).json({ message: 'Something went wronggg 😢❌' });
+            res.status(400).json({ message: 'Envie um arquivo de imagem válido' });
             return;
         }
         // busca perfil para saber caminho da foto antiga

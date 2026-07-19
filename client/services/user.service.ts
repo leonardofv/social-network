@@ -27,8 +27,6 @@ export class UserService {
       headers: { Authorization: `Bearer ${token}` },
     });
 
-    const data = await res.json();
-
     if (!res.ok) {
       throw new Error(
         res.status === 401
@@ -36,8 +34,8 @@ export class UserService {
           : 'Algo deu errado. Tente novamente.',
       );
     }
-
-    return data;
+    
+    return res.json();
   }
 
   static async uploadProfilePicture(
@@ -64,16 +62,14 @@ export class UserService {
       body: formData,
     });
 
-    const data = await res.json();
-
     if (!res.ok) {
-      throw new Error(
-        res.status === 401
-          ? 'Sessão expirada. Faça login novamente.'
-          : 'Algo deu errado. Tente novamente.',
-      );
+      if (res.status === 401) throw new Error('Sessão expirada. Faça login novamente.');
+      if (res.status === 413) throw new Error('A imagem deve ter no máximo 5MB.');
+      if (res.status === 400) throw new Error('Arquivo inválido. Envie uma imagem.');
+      throw new Error('Algo deu errado. Tente novamente.');
     }
-
+  
+    const data = await res.json();
     return data.data;
   }
 

@@ -1,6 +1,7 @@
 import multer from "multer";
 import path from "path";
 import fs from 'fs';
+import { NextFunction, Request, Response } from "express";
 
 const UPLOADS_DIR = path.resolve(__dirname, '../../uploads');
 
@@ -21,6 +22,21 @@ export const upload = multer({
         cb(null, file.mimetype.startsWith('image/'));
     }
 });
-
-
 // cria a pasta server/uploads/ e gera um nome único para cada arquivo (para um usuário não sobrescrever o do outro)
+
+export const uploadErrorHandler = (
+    error: unknown,
+    _req: Request,
+    res: Response,
+    next: NextFunction
+) => {
+    if (error instanceof multer.MulterError) {
+        if (error.code === 'LIMIT_FILE_SIZE') {
+            res.status(413).json({ message: 'A imagem deve ter no máximo 5 MB' });
+            return;
+        }
+        res.status(400).json({ message: 'Upload inválido' });
+        return;
+    }
+    next(error);
+}
