@@ -67,6 +67,14 @@ export default function ProfileScreen() {
     );
   }
 
+  const showError = (message: string) => {
+    if (Platform.OS === 'web') {
+      window.alert(message);
+      return;
+    }
+    Alert.alert('Erro', message);
+  };
+
   const pickImage = async () => {
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ['images'],
@@ -85,7 +93,7 @@ export default function ProfileScreen() {
       );
       setUser((prev) => (prev ? { ...prev, profilePicture } : prev));
     } catch {
-      setError('Não foi possível enviar a foto');
+      showError('Não foi possível enviar a foto');
     } finally {
       setUploading(false);
     }
@@ -97,7 +105,7 @@ export default function ProfileScreen() {
       await UserService.deleteProfilePicture();
       setUser((prev) => (prev ? { ...prev, profilePicture: null } : prev));
     } catch {
-      setError('Não foi possível remover a foto');
+      showError('Não foi possível remover a foto');
     } finally {
       setUploading(false);
     }
