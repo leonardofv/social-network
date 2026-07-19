@@ -9,7 +9,7 @@ const router = Router();
 
 const SALT_ROUNDS = 10;
 
-type DatabaseError = { constraint: string };
+type DatabaseError = { constraint?: string };
 
 // Register User
 router.post('/register', async (req, res) => {
@@ -43,17 +43,17 @@ router.post('/register', async (req, res) => {
       token,
     });
   } catch (err) {
-    const isUniqueConstraint = !!(err as DatabaseError).constraint.includes(
+    const isUniqueConstraint = !!(err as DatabaseError).constraint?.includes(
       'unique',
     );
 
     if (isUniqueConstraint) {
-      res.status(400).json({ message: 'Username/email already exists 😢❌' });
+      res.status(400).json({ message: 'Nome de usuário ou e-mail já cadastrado' });
       return;
     }
 
     console.error(err);
-    res.status(500).json({ message: 'Something went wrong 😢❌' });
+    res.status(500).json({ message: 'Algo deu errado' });
   }
 });
 
