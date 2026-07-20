@@ -7,6 +7,21 @@ export type User = {
   username: string;
 };
 
+export type UserProfile = {
+  id: number;
+  email: string;
+  username: string;
+  name: string;
+  profilePicture: string | null;
+  bio: string | null;
+};
+
+export type UpdateProfileInput = {
+  name: string;
+  username: string;
+  bio: string | null;
+};
+
 export const create = async ({
   email,
   password,
@@ -36,15 +51,6 @@ export const findByEmailOrUsername = async (
   return user;
 };
 
-export type UserProfile = {
-  id: number;
-  email: string;
-  username: string;
-  name: string;
-  profilePicture: string | null;
-  bio: string | null;
-};
-
 export const findProfileById = async (
   id: number,
 ): Promise<UserProfile | null> => {
@@ -68,6 +74,13 @@ export const updateProfilePicture = async (
   await db('user_profile')
     .where('user_id', userId)
     .update('profile_picture', profilePicture);
-}
+};
+
+export const updateProfile = async (userId: number, { name, username, bio }: UpdateProfileInput): Promise<void> => {
+  await db.transaction(async (trx) => {
+    await trx('users').where('id', userId).update('username', username);
+    await trx('user_profile').where('user_id', userId).update({ name, bio });
+  });
+};
 
 

@@ -23,6 +23,39 @@ router.get('/me', authMiddleware, async (req: AuthenticatedRequest, res) => {
     }
 });
 
+router.put('/me', authMiddleware, async (req: AuthenticatedRequest, res) => {
+    try {
+        const { name, username, bio } = req.body;
+
+        if (!name.trim() || !username.trim()) {
+            res.status(400).json({ message: 'Nome e nome de usuário são obrigatórios' });
+            return;
+        };
+        if (bio && bio.length > 160) {
+            res.status(400).json({ message: 'A biografia deve ter no máximo 160 caracteres' });
+            return;
+        };
+
+        await userRepository.updateProfile(req.userId!, {
+            name: name.trim(),
+            username: username.trim(),
+            bio: bio || null,
+        });
+
+        const user = await userRepository.findProfileById(req.userId!);
+        res.status(200).json({ message: 'OK', data: user });
+    } catch(error) {
+        const isUniqueConstraint = !!(error as { constraint?: string }).constraint?.includes('unique');
+        
+        if (isUniqueConstraint) {
+            res.status(400).json({ message: 'Nome de usuário já está em uso' });
+            return;
+        }
+        console.log(error);
+        res.status(500).json({ message: 'Algo deu errado' });
+    }
+});
+
 router.put('/me/picture', authMiddleware, upload.single('picture'), uploadErrorHandler, async (req: AuthenticatedRequest, res: Response) => {
     try {
         if (!req.file) {

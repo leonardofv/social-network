@@ -1,8 +1,8 @@
 import { Brand } from '@/constants/Colors';
 import { UserProfile, UserService } from '@/services/user.service';
 import { clearToken } from '@/utils';
-import { useRouter } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { useFocusEffect, useRouter } from 'expo-router';
+import { useCallback, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -26,30 +26,53 @@ export default function ProfileScreen() {
 
   const API_URL = process.env.EXPO_PUBLIC_API_URL;
 
-  useEffect(() => {
-    const loadProfile = async () => {
-      try {
-        const { data } = await UserService.getMe();
-        setUser(data);
-      } catch (error) {
-        if (
-          error instanceof Error &&
-          error.message.includes('Sessão expirada')
-        ) {
-          await clearToken();
-          router.replace('/login');
-          return;
-        }
-        setError(
-          error instanceof Error ? error.message : 'Não foi possível conectar',
-        );
-      } finally {
-        setLoading(false);
-      }
-    };
+  // useEffect(() => {
+  //   const loadProfile = async () => {
+  //     try {
+  //       const { data } = await UserService.getMe();
+  //       setUser(data);
+  //     } catch (error) {
+  //       if (
+  //         error instanceof Error &&
+  //         error.message.includes('Sessão expirada')
+  //       ) {
+  //         await clearToken();
+  //         router.replace('/login');
+  //         return;
+  //       }
+  //       setError(
+  //         error instanceof Error ? error.message : 'Não foi possível conectar',
+  //       );
+  //     } finally {
+  //       setLoading(false);
+  //     }
+  //   };
 
-    loadProfile();
-  }, []);
+  //   loadProfile();
+  // }, []);
+  const loadProfile = useCallback(async () => {
+    try {
+      const { data } = await UserService.getMe();
+      setUser(data);
+    } catch (error) {
+      if (error instanceof Error && error.message.includes('Sessão expirada')) {
+        await clearToken();
+        router.replace('/login');
+        return;
+      }
+      setError(
+        error instanceof Error ? error.message : 'Não foi possível conectar',
+      );
+    } finally {
+      setLoading(false);
+    }
+  }, [router]);
+
+  useFocusEffect(
+    useCallback(() => {
+      loadProfile();
+    }, [loadProfile]),
+  );
 
   if (loading) {
     return (
@@ -92,8 +115,12 @@ export default function ProfileScreen() {
         result.assets[0].uri,
       );
       setUser((prev) => (prev ? { ...prev, profilePicture } : prev));
-    } catch(error) {
-      showError(error instanceof Error ? error.message : 'Não foi possível enviar a foto');
+    } catch (error) {
+      showError(
+        error instanceof Error
+          ? error.message
+          : 'Não foi possível enviar a foto',
+      );
     } finally {
       setUploading(false);
     }
@@ -155,8 +182,14 @@ export default function ProfileScreen() {
           <Text style={styles.removePhoto}>Remover foto</Text>
         </Pressable>
       )}
-      <Text style={styles.name}>{user?.name ?? user?.username}</Text>
+      <View style={styles.nameRow}>
+        <Text style={styles.name}>{user?.name ?? user?.username}</Text>
+        <Pressable onPress={() => router.push('/edit-profile')} hitSlop={8}>
+          <Ionicons name="pencil" size={16} color={Brand.textMuted} />
+        </Pressable>
+      </View>
       <Text style={styles.email}>{user?.username}</Text>
+      {user?.bio && <Text style={styles.bio}>{user?.bio}</Text>}
     </View>
   );
 }
@@ -230,5 +263,10 @@ const styles = StyleSheet.create({
     fontFamily: 'Lato',
     fontSize: 14,
     color: Brand.error,
+  },
+  nameRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
   },
 });

@@ -71,7 +71,7 @@ export class UserService {
   
     const data = await res.json();
     return data.data;
-  }
+  };
 
   static async deleteProfilePicture(): Promise<void> {
     const token = await getToken();
@@ -88,5 +88,34 @@ export class UserService {
           : 'Algo deu errado. Tente novamente',
       );
     }
-  }
+  };
+
+  static async updateProfile(payload: {
+    name: string;
+    username: string;
+    bio: string | null;
+  }): Promise<UserProfile> {
+    const token = await getToken();
+
+    const res = await fetch(`${API_URL}/users/me`, {
+      method: 'PUT',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(payload)
+    });
+
+    if (!res.ok) {
+      if (res.status === 401) throw new Error('Sessão expirada. Faça login novamente.');
+      if (res.status === 400) {
+        const data = await res.json().catch(() => null);
+        throw new Error(data?.message ?? 'Dados inválidos.');
+      }
+      throw new Error('Algo deu errado. Tente novamente.');
+    }
+
+    const data = await res.json();
+    return data.data;
+  };
 }
