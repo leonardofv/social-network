@@ -4,6 +4,7 @@ import { authMiddleware, type AuthenticatedRequest } from '../middlewares/auth.m
 import { upload, uploadErrorHandler } from "../middlewares/upload.middleware";
 import path from "path";
 import fs from 'fs/promises';
+import { isValidUsername } from "../utils/username";
 
 const router = Router();
 
@@ -31,6 +32,12 @@ router.put('/me', authMiddleware, async (req: AuthenticatedRequest, res) => {
             res.status(400).json({ message: 'Nome e nome de usuário são obrigatórios' });
             return;
         };
+        
+        if (!isValidUsername(username.trim())) {
+            res.status(400).json({ message: 'Nome de usuário deve ter de 3 a 20 caracteres, apenas letras minúsculas, números, "_" e "."' });
+            return;
+        };
+
         if (bio && bio.length > 160) {
             res.status(400).json({ message: 'A biografia deve ter no máximo 160 caracteres' });
             return;

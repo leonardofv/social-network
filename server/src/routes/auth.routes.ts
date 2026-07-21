@@ -2,6 +2,7 @@ import { Router } from 'express';
 import * as userRepository from '../repositories/user.repository';
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcrypt';
+import { isValidUsername } from '../utils/username';
 
 const JWT_SECRET = process.env.JWT_SECRET ?? '';
 
@@ -24,6 +25,12 @@ router.post('/register', async (req, res) => {
     res.status(400).json({ message: 'Passwords must match' });
     return;
   }
+  
+  if (!isValidUsername(username.trim())) {
+    res.status(400).json({ message: 'Nome de usuário deve ter de 3 a 20 caracteres, apenas letras minúsculas, números, "_" e "."' });
+    return;
+  };
+  
 
   const hashedPassword = await bcrypt.hash(password, SALT_ROUNDS);
 
