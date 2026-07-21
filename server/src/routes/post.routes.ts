@@ -19,12 +19,10 @@ router.post('/', authMiddleware, async (req: AuthenticatedRequest, res) => {
       description,
       userId: req.userId!,
     });
-
-    res
-      .status(201)
-      .json({ message: 'Post criado com sucesso', data: post });
-  } catch (err) {
-    console.error(err);
+    
+    res.status(201).json({ message: 'Post criado com sucesso', data: post });
+  } catch (error) {
+    console.error(error);
     res.status(500).json({ message: 'Algo deu errado' });
   }
 });
@@ -33,9 +31,9 @@ router.post('/', authMiddleware, async (req: AuthenticatedRequest, res) => {
 router.get('/', authMiddleware, async (req:AuthenticatedRequest, res) => {
   try {
     const posts = await postRepository.getByUserId(req.userId!);
-    res.status(201).json(posts);
-  } catch (err) {
-    console.log(err);
+    res.status(200).json({ message: 'OK', data: posts });
+  } catch (error) {
+    console.log(error);
     res.status(500).json({ message: 'Algo deu errado' });
   }
 });

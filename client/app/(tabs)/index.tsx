@@ -27,8 +27,7 @@ export default function HomeScreen() {
           },
         });
         const data = await response.json();
-        console.log('Fetched posts:', data); //post no console
-        setPosts(data);
+        setPosts(data.data);
       } catch (error) {
         console.error('Error fetching posts:', error);
       }
