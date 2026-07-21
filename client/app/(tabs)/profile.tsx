@@ -6,7 +6,6 @@ import { useCallback, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
-  Image,
   Platform,
   Pressable,
   StyleSheet,
@@ -15,6 +14,7 @@ import {
 } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { Ionicons } from '@expo/vector-icons';
+import { Image } from 'expo-image';
 
 export default function ProfileScreen() {
   const [user, setUser] = useState<UserProfile | null>(null);
@@ -26,30 +26,6 @@ export default function ProfileScreen() {
 
   const API_URL = process.env.EXPO_PUBLIC_API_URL;
 
-  // useEffect(() => {
-  //   const loadProfile = async () => {
-  //     try {
-  //       const { data } = await UserService.getMe();
-  //       setUser(data);
-  //     } catch (error) {
-  //       if (
-  //         error instanceof Error &&
-  //         error.message.includes('Sessão expirada')
-  //       ) {
-  //         await clearToken();
-  //         router.replace('/login');
-  //         return;
-  //       }
-  //       setError(
-  //         error instanceof Error ? error.message : 'Não foi possível conectar',
-  //       );
-  //     } finally {
-  //       setLoading(false);
-  //     }
-  //   };
-
-  //   loadProfile();
-  // }, []);
   const loadProfile = useCallback(async () => {
     try {
       const { data } = await UserService.getMe();
@@ -163,6 +139,9 @@ export default function ProfileScreen() {
           <Image
             source={{ uri: `${API_URL}${user.profilePicture}` }}
             style={styles.avatar}
+            contentFit='cover'
+            cachePolicy="memory-disk"
+            transition={200}
           />
         ) : (
           <View style={[styles.avatar, styles.avatarPlaceholder]}>
