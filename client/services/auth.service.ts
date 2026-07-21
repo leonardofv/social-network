@@ -34,15 +34,14 @@ export class AuthService {
       method: 'POST',
     });
 
-    const data = await res.json();
-
     if (!res.ok) {
-      throw new Error(
-        res.status === 400 ? data.message : 'Algo deu errado. Tente novamente.',
-      );
+      if (res.status === 400) {
+        const data = await res.json().catch(() => null);
+        throw new Error(data?.message ?? 'Dados inválidos.');
+      }
+      throw new Error('Algo deu errado. Tente novamente.');
     }
-
-    return data;
+    return res.json();
   }
 
   static async register({
@@ -72,14 +71,14 @@ export class AuthService {
       method: 'POST',
     });
 
-    const data = await res.json();
-
     if (!res.ok) {
-      throw new Error(
-        res.status === 400 ? data.message : 'Algo deu errado. Tente novamente.',
-      );
+      if (res.status === 400) {
+        const data = await res.json().catch(() => null);
+        throw new Error(data?.message ?? 'Dados inválidos.');
+      }
+      throw new Error('Algo deu errado. Tente novamente.');
     }
 
-    return data;
+    return res.json();
   }
 }
