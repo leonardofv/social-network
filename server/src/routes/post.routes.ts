@@ -1,25 +1,26 @@
-import { Router } from 'express';
+import { Response, Router } from 'express';
 import * as postRepository from '../repositories/post.repository';
 import { authMiddleware, type AuthenticatedRequest } from '../middlewares/auth.middleware';
+import { upload, uploadErrorHandler } from '../middlewares/upload.middleware';
 
 const router = Router();
 
 // Create a new Post
-router.post('/', authMiddleware, async (req: AuthenticatedRequest, res) => {
-  const { path, description } = req.body;
+router.post('/', authMiddleware, upload.single('image'), uploadErrorHandler, async (req: AuthenticatedRequest, res: Response) => {
+  const { description } = req.body;
 
-  if (!path) {
-    res.status(401).json({ message: 'caminho da imagem obrigatório' });
+  if (!req.file) {
+    res.status(400).json({ message: 'Envia uma imagem' });
     return;
-  }
+  };
 
   try {
     const post = await postRepository.create({
-      path,
+      path: `/uploads/${req.file.filename}`,
       description,
       userId: req.userId!,
     });
-    
+
     res.status(201).json({ message: 'Post criado com sucesso', data: post });
   } catch (error) {
     console.error(error);
