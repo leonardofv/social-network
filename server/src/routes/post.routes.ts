@@ -10,7 +10,7 @@ router.post('/', authMiddleware, upload.single('image'), uploadErrorHandler, asy
   const { description } = req.body;
 
   if (!req.file) {
-    res.status(400).json({ message: 'Envia uma imagem' });
+    res.status(400).json({ message: 'Envie uma imagem valida' });
     return;
   };
 
