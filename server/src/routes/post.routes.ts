@@ -10,7 +10,7 @@ router.post('/', authMiddleware, upload.single('image'), uploadErrorHandler, asy
   const { description } = req.body;
 
   if (!req.file) {
-    res.status(400).json({ message: 'Envie uma imagem valida' });
+    res.status(400).json({ message: 'Envie uma imagem válida' });
     return;
   };
 
@@ -28,7 +28,7 @@ router.post('/', authMiddleware, upload.single('image'), uploadErrorHandler, asy
   }
 });
 
-// List all Posts
+// List all Posts to User
 router.get('/', authMiddleware, async (req:AuthenticatedRequest, res) => {
   try {
     const posts = await postRepository.getByUserId(req.userId!);

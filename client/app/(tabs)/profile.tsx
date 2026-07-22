@@ -169,6 +169,9 @@ export default function ProfileScreen() {
       </View>
       <Text style={styles.email}>{user?.username}</Text>
       {user?.bio && <Text style={styles.bio}>{user?.bio}</Text>}
+      <Pressable onPress={() => router.push('/create-post')} style={styles.newPostButton}>
+        <Ionicons name='add-circle-outline' size={18}/>
+      </Pressable>
     </View>
   );
 }
@@ -247,5 +250,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
+  },
+   newPostButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginTop: 12,
   },
 });
