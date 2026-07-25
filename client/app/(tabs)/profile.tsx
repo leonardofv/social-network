@@ -134,49 +134,74 @@ export default function ProfileScreen() {
 
   return (
     <View style={styles.container}>
-      <Pressable onPress={onAvatarPress} disabled={uploading}>
-        {user?.profilePicture ? (
-          <Image
-            source={{ uri: `${API_URL}${user.profilePicture}` }}
-            style={styles.avatar}
-            contentFit='cover'
-            cachePolicy="memory-disk"
-            transition={200}
-          />
-        ) : (
-          <View style={[styles.avatar, styles.avatarPlaceholder]}>
-            <Text style={styles.avatarInitial}>{user?.name?.[0] ?? '?'}</Text>
-          </View>
-        )}
-        <View style={styles.cameraBadge}>
-          {uploading ? (
-            <ActivityIndicator size="small" color="#fff" />
-          ) : (
-            <Ionicons name="camera" size={16} color="#fff" />
+      <View style={styles.header}>
+        <View style={styles.avatarColumn}>
+          <Pressable onPress={onAvatarPress} disabled={uploading}>
+            {user?.profilePicture ? (
+              <Image
+                source={{ uri: `${API_URL}${user.profilePicture}` }}
+                style={styles.avatar}
+                contentFit="cover"
+                cachePolicy="memory-disk"
+                transition={200}
+              />
+            ) : (
+              <View style={[styles.avatar, styles.avatarPlaceholder]}>
+                <Text style={styles.avatarInitial}>
+                  {user?.name?.[0] ?? '?'}
+                </Text>
+              </View>
+            )}
+            <View style={styles.cameraBadge}>
+              {uploading ? (
+                <ActivityIndicator size="small" color="#fff" />
+              ) : (
+                <Ionicons name="camera" size={16} color="#fff" />
+              )}
+            </View>
+          </Pressable>
+          {Platform.OS === 'web' && user?.profilePicture && (
+            <Pressable onPress={onRemovePress} disabled={uploading}>
+              <Text style={styles.removePhoto}>Remover foto</Text>
+            </Pressable>
           )}
         </View>
-      </Pressable>
-      {Platform.OS === 'web' && user?.profilePicture && (
-        <Pressable onPress={onRemovePress} disabled={uploading}>
-          <Text style={styles.removePhoto}>Remover foto</Text>
-        </Pressable>
-      )}
-      <View style={styles.nameRow}>
-        <Text style={styles.name}>{user?.name ?? user?.username}</Text>
-        <Pressable onPress={() => router.push('/edit-profile')} hitSlop={8}>
-          <Ionicons name="pencil" size={16} color={Brand.textMuted} />
-        </Pressable>
+
+        <View style={styles.headerInfo}>
+          <View style={styles.nameRow}>
+            <Text style={styles.name}>{user?.name ?? user?.username}</Text>
+            <Pressable onPress={() => router.push('/edit-profile')} hitSlop={8}>
+              <Ionicons name="pencil" size={16} color={Brand.textMuted} />
+            </Pressable>
+          </View>
+          <Text style={styles.email}>{user?.username}</Text>
+        </View>
       </View>
-      <Text style={styles.email}>{user?.username}</Text>
+
       {user?.bio && <Text style={styles.bio}>{user?.bio}</Text>}
-      <Pressable onPress={() => router.push('/create-post')} style={styles.newPostButton}>
-        <Ionicons name='add-circle-outline' size={18}/>
+      <Pressable
+        onPress={() => router.push('/create-post')}
+        style={styles.newPostButton}
+      >
+        <Ionicons name="add-circle-outline" size={18} />
       </Pressable>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
+  center: {
+    flex: 1,
+    backgroundColor: Brand.background,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  error: {
+    fontFamily: 'Lato',
+    fontSize: 14,
+    color: Brand.error,
+    textAlign: 'center',
+  },
   container: {
     flex: 1,
     backgroundColor: Brand.background,
@@ -184,34 +209,14 @@ const styles = StyleSheet.create({
     padding: 24,
     gap: 8,
   },
-  center: {
-    flex: 1,
-    backgroundColor: Brand.background,
+  header: {
+    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
+    gap: 16,
   },
-  name: {
-    fontFamily: 'LatoBold',
-    fontSize: 22,
-    color: Brand.text,
-  },
-  email: {
-    fontFamily: 'Lato',
-    fontSize: 15,
-    color: Brand.textMuted,
-  },
-  bio: {
-    fontFamily: 'Lato',
-    fontSize: 15,
-    color: Brand.text,
-    textAlign: 'center',
-    marginTop: 8,
-  },
-  error: {
-    fontFamily: 'Lato',
-    fontSize: 14,
-    color: Brand.error,
-    textAlign: 'center',
+  avatarColumn: {
+    alignItems: 'center',
+    gap: 4,
   },
   avatar: {
     width: 96,
@@ -246,12 +251,32 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: Brand.error,
   },
+  headerInfo: {
+    gap: 4,
+  },
   nameRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
   },
-   newPostButton: {
+  name: {
+    fontFamily: 'LatoBold',
+    fontSize: 22,
+    color: Brand.text,
+  },
+  email: {
+    fontFamily: 'Lato',
+    fontSize: 15,
+    color: Brand.textMuted,
+  },
+  bio: {
+    fontFamily: 'Lato',
+    fontSize: 15,
+    color: Brand.text,
+    textAlign: 'center',
+    marginTop: 8,
+  },
+  newPostButton: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
