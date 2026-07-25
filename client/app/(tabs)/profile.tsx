@@ -1,4 +1,5 @@
 import { Brand } from '@/constants/Colors';
+import { Post, PostService } from '@/services/post.service';
 import { UserProfile, UserService } from '@/services/user.service';
 import { clearToken } from '@/utils';
 import { useFocusEffect, useRouter } from 'expo-router';
@@ -6,6 +7,8 @@ import { useCallback, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
+  useWindowDimensions,
+  FlatList,
   Platform,
   Pressable,
   StyleSheet,
@@ -16,15 +19,27 @@ import * as ImagePicker from 'expo-image-picker';
 import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 
+const GRID_COLUMNS = 3;
+const GRID_GAP = 2;
+const MAX_CONTENT_WIDTH = 420;
+const HEADER_PADDING = 24;
+
 export default function ProfileScreen() {
   const [user, setUser] = useState<UserProfile | null>(null);
+  const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
+  const [postsLoading, setPostsLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState('');
+  const [postsError, setPostsError] = useState('');
 
   const router = useRouter();
 
   const API_URL = process.env.EXPO_PUBLIC_API_URL;
+
+  const { width: windowWidth } = useWindowDimensions();
+  const contentWidth = Math.min(windowWidth, MAX_CONTENT_WIDTH);
+  const gridItemSize = (contentWidth - GRID_GAP * (GRID_COLUMNS - 1)) / GRID_COLUMNS;
 
   const loadProfile = useCallback(async () => {
     try {
@@ -44,10 +59,24 @@ export default function ProfileScreen() {
     }
   }, [router]);
 
+  const loadPosts = useCallback(async () => {
+    setPostsLoading(true);
+    try {
+      const myPosts = await PostService.getMyPosts();
+      setPosts(myPosts);
+      setPostsError('');
+    } catch {
+      setPostsError('Não foi possível carregar as publicações');
+    } finally {
+      setPostsLoading(false);
+    }
+  }, []);
+
   useFocusEffect(
     useCallback(() => {
       loadProfile();
-    }, [loadProfile]),
+      loadPosts();
+    }, [loadProfile, loadPosts]),
   );
 
   if (loading) {
@@ -133,59 +162,87 @@ export default function ProfileScreen() {
   };
 
   return (
-    <View style={styles.container}>
-      <View style={styles.header}>
-        <View style={styles.avatarColumn}>
-          <Pressable onPress={onAvatarPress} disabled={uploading}>
-            {user?.profilePicture ? (
-              <Image
-                source={{ uri: `${API_URL}${user.profilePicture}` }}
-                style={styles.avatar}
-                contentFit="cover"
-                cachePolicy="memory-disk"
-                transition={200}
-              />
-            ) : (
-              <View style={[styles.avatar, styles.avatarPlaceholder]}>
-                <Text style={styles.avatarInitial}>
-                  {user?.name?.[0] ?? '?'}
-                </Text>
-              </View>
-            )}
-            <View style={styles.cameraBadge}>
-              {uploading ? (
-                <ActivityIndicator size="small" color="#fff" />
-              ) : (
-                <Ionicons name="camera" size={16} color="#fff" />
+    <FlatList
+      style={styles.container}
+      contentContainerStyle={styles.content}
+      data={posts}
+      keyExtractor={(item) => item.id.toString()}
+      numColumns={GRID_COLUMNS}
+      columnWrapperStyle={styles.gridRow}
+      ItemSeparatorComponent={() => <View style={styles.gridSeparator} />}
+      renderItem={({ item }) => (
+        <Image
+          source={{ uri: `${API_URL}${item.path}` }}
+          style={{ width: gridItemSize, height: gridItemSize }}
+          contentFit="cover"
+          cachePolicy="memory-disk"
+        />
+      )}
+      ListHeaderComponent={
+        <View style={styles.header}>
+          <View style={styles.avatarRow}>
+            <View style={styles.avatarColumn}>
+              <Pressable onPress={onAvatarPress} disabled={uploading}>
+                {user?.profilePicture ? (
+                  <Image
+                    source={{ uri: `${API_URL}${user.profilePicture}` }}
+                    style={styles.avatar}
+                    contentFit="cover"
+                    cachePolicy="memory-disk"
+                    transition={200}
+                  />
+                ) : (
+                  <View style={[styles.avatar, styles.avatarPlaceholder]}>
+                    <Text style={styles.avatarInitial}>
+                      {user?.name?.[0] ?? '?'}
+                    </Text>
+                  </View>
+                )}
+                <View style={styles.cameraBadge}>
+                  {uploading ? (
+                    <ActivityIndicator size="small" color="#fff" />
+                  ) : (
+                    <Ionicons name="camera" size={16} color="#fff" />
+                  )}
+                </View>
+              </Pressable>
+              {Platform.OS === 'web' && user?.profilePicture && (
+                <Pressable onPress={onRemovePress} disabled={uploading}>
+                  <Text style={styles.removePhoto}>Remover foto</Text>
+                </Pressable>
               )}
             </View>
-          </Pressable>
-          {Platform.OS === 'web' && user?.profilePicture && (
-            <Pressable onPress={onRemovePress} disabled={uploading}>
-              <Text style={styles.removePhoto}>Remover foto</Text>
-            </Pressable>
-          )}
-        </View>
 
-        <View style={styles.headerInfo}>
-          <View style={styles.nameRow}>
-            <Text style={styles.name}>{user?.name ?? user?.username}</Text>
-            <Pressable onPress={() => router.push('/edit-profile')} hitSlop={8}>
-              <Ionicons name="pencil" size={16} color={Brand.textMuted} />
-            </Pressable>
+            <View style={styles.headerInfo}>
+              <View style={styles.nameRow}>
+                <Text style={styles.name}>{user?.name ?? user?.username}</Text>
+                <Pressable onPress={() => router.push('/edit-profile')} hitSlop={8}>
+                  <Ionicons name="pencil" size={16} color={Brand.textMuted} />
+                </Pressable>
+              </View>
+              <Text style={styles.email}>{user?.username}</Text>
+            </View>
           </View>
-          <Text style={styles.email}>{user?.username}</Text>
-        </View>
-      </View>
 
-      {user?.bio && <Text style={styles.bio}>{user?.bio}</Text>}
-      <Pressable
-        onPress={() => router.push('/create-post')}
-        style={styles.newPostButton}
-      >
-        <Ionicons name="add-circle-outline" size={18} />
-      </Pressable>
-    </View>
+          {user?.bio && <Text style={styles.bio}>{user?.bio}</Text>}
+          <Pressable
+            onPress={() => router.push('/create-post')}
+            style={styles.newPostButton}
+          >
+            <Ionicons name="add-circle-outline" size={18} />
+          </Pressable>
+        </View>
+      }
+      ListEmptyComponent={
+        postsLoading ? (
+          <ActivityIndicator color={Brand.primary} />
+        ) : (
+          <Text style={postsError ? styles.postsError : styles.emptyText}>
+            {postsError || 'Nenhuma publicação ainda'}
+          </Text>
+        )
+      }
+    />
   );
 }
 
@@ -205,11 +262,19 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: Brand.background,
+  },
+  content: {
     alignItems: 'center',
-    padding: 24,
-    gap: 8,
+    paddingVertical: HEADER_PADDING,
   },
   header: {
+    width: '100%',
+    alignItems: 'center',
+    paddingHorizontal: HEADER_PADDING,
+    gap: 8,
+    marginBottom: 16,
+  },
+  avatarRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 16,
@@ -274,12 +339,29 @@ const styles = StyleSheet.create({
     fontSize: 15,
     color: Brand.text,
     textAlign: 'center',
-    marginTop: 8,
   },
   newPostButton: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    marginTop: 12,
+    marginTop: 4,
+  },
+  gridRow: {
+    gap: GRID_GAP,
+  },
+  gridSeparator: {
+    height: GRID_GAP,
+  },
+  emptyText: {
+    fontFamily: 'Lato',
+    fontSize: 14,
+    color: Brand.textMuted,
+    marginTop: 24,
+  },
+  postsError: {
+    fontFamily: 'Lato',
+    fontSize: 14,
+    color: Brand.error,
+    marginTop: 24,
   },
 });
