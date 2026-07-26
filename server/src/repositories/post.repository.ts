@@ -35,7 +35,8 @@ export const getAll = async (): Promise<Post[]> => {
       userId: 'user_id',
     })
     .select()
-    .from('post');
+    .from('post')
+    .orderBy('publish_date', 'desc');
 };
 
 export const getByUserId = async (userId: User['id']): Promise<Post[]> => {
@@ -46,5 +47,6 @@ export const getByUserId = async (userId: User['id']): Promise<Post[]> => {
     })
     .select()
     .from('post')
-    .where({ user_id: userId });
+    .where({ user_id: userId })
+    .orderBy('publish_date', 'desc');
 };
