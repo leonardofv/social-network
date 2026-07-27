@@ -1,7 +1,8 @@
 import { Brand } from '@/constants/Colors';
+import { useSessionGuard } from '@/hooks/useSessionGuard';
+import { mediaUrl } from '@/services/api';
 import { Post, PostService } from '@/services/post.service';
 import { UserProfile, UserService } from '@/services/user.service';
-import { clearToken } from '@/utils';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useState } from 'react';
 import {
@@ -23,6 +24,15 @@ const GRID_COLUMNS = 3;
 const GRID_GAP = 2;
 const MAX_CONTENT_WIDTH = 420;
 const HEADER_PADDING = 24;
+const IS_WEB = Platform.OS === 'web';
+
+const showError = (message: string) => {
+  if (IS_WEB) {
+    window.alert(message);
+    return;
+  }
+  Alert.alert('Erro', message);
+};
 
 export default function ProfileScreen() {
   const [user, setUser] = useState<UserProfile | null>(null);
@@ -34,43 +44,37 @@ export default function ProfileScreen() {
   const [postsError, setPostsError] = useState('');
 
   const router = useRouter();
-
-  const API_URL = process.env.EXPO_PUBLIC_API_URL;
+  const handleSessionExpired = useSessionGuard();
 
   const { width: windowWidth } = useWindowDimensions();
   const contentWidth = Math.min(windowWidth, MAX_CONTENT_WIDTH);
-  const gridItemSize = (contentWidth - GRID_GAP * (GRID_COLUMNS - 1)) / GRID_COLUMNS;
+  const gridItemSize =
+    (contentWidth - GRID_GAP * (GRID_COLUMNS - 1)) / GRID_COLUMNS;
 
   const loadProfile = useCallback(async () => {
     try {
-      const { data } = await UserService.getMe();
-      setUser(data);
-    } catch (error) {
-      if (error instanceof Error && error.message.includes('Sessão expirada')) {
-        await clearToken();
-        router.replace('/login');
-        return;
-      }
-      setError(
-        error instanceof Error ? error.message : 'Não foi possível conectar',
-      );
+      setUser(await UserService.getMe());
+      setError('');
+    } catch (err) {
+      if (await handleSessionExpired(err)) return;
+      setError(err instanceof Error ? err.message : 'Não foi possível conectar');
     } finally {
       setLoading(false);
     }
-  }, [router]);
+  }, [handleSessionExpired]);
 
   const loadPosts = useCallback(async () => {
     setPostsLoading(true);
     try {
-      const myPosts = await PostService.getMyPosts();
-      setPosts(myPosts);
+      setPosts(await PostService.getMyPosts());
       setPostsError('');
-    } catch {
+    } catch (err) {
+      if (await handleSessionExpired(err)) return;
       setPostsError('Não foi possível carregar as publicações');
     } finally {
       setPostsLoading(false);
     }
-  }, []);
+  }, [handleSessionExpired]);
 
   useFocusEffect(
     useCallback(() => {
@@ -87,21 +91,18 @@ export default function ProfileScreen() {
     );
   }
 
-  if (error) {
+  // A partir daqui `user` é garantido, o que dispensa optional chaining abaixo.
+  if (error || !user) {
     return (
       <View style={styles.center}>
-        <Text style={styles.error}>{error}</Text>
+        <Text style={[styles.message, styles.messageError]}>
+          {error || 'Não foi possível carregar o perfil'}
+        </Text>
       </View>
     );
   }
 
-  const showError = (message: string) => {
-    if (Platform.OS === 'web') {
-      window.alert(message);
-      return;
-    }
-    Alert.alert('Erro', message);
-  };
+  const avatarUri = user.profilePicture && mediaUrl(user.profilePicture);
 
   const pickImage = async () => {
     const result = await ImagePicker.launchImageLibraryAsync({
@@ -119,12 +120,11 @@ export default function ProfileScreen() {
       const { profilePicture } = await UserService.uploadProfilePicture(
         result.assets[0].uri,
       );
-      setUser((prev) => (prev ? { ...prev, profilePicture } : prev));
-    } catch (error) {
+      setUser({ ...user, profilePicture });
+    } catch (err) {
+      if (await handleSessionExpired(err)) return;
       showError(
-        error instanceof Error
-          ? error.message
-          : 'Não foi possível enviar a foto',
+        err instanceof Error ? err.message : 'Não foi possível enviar a foto',
       );
     } finally {
       setUploading(false);
@@ -135,8 +135,9 @@ export default function ProfileScreen() {
     setUploading(true);
     try {
       await UserService.deleteProfilePicture();
-      setUser((prev) => (prev ? { ...prev, profilePicture: null } : prev));
-    } catch {
+      setUser({ ...user, profilePicture: null });
+    } catch (err) {
+      if (await handleSessionExpired(err)) return;
       showError('Não foi possível remover a foto');
     } finally {
       setUploading(false);
@@ -144,7 +145,8 @@ export default function ProfileScreen() {
   };
 
   const onAvatarPress = () => {
-    if (!user?.profilePicture || Platform.OS === 'web') {
+    // O Alert com botões não existe no web: lá a remoção fica no link abaixo.
+    if (!avatarUri || IS_WEB) {
       pickImage();
       return;
     }
@@ -157,8 +159,7 @@ export default function ProfileScreen() {
   };
 
   const onRemovePress = () => {
-    const confirmed = window.confirm('Remover a foto de perfil ?');
-    if (confirmed) removePicture();
+    if (window.confirm('Remover a foto de perfil?')) removePicture();
   };
 
   return (
@@ -166,13 +167,12 @@ export default function ProfileScreen() {
       style={styles.container}
       contentContainerStyle={styles.content}
       data={posts}
-      keyExtractor={(item) => item.id.toString()}
       numColumns={GRID_COLUMNS}
       columnWrapperStyle={styles.gridRow}
       ItemSeparatorComponent={() => <View style={styles.gridSeparator} />}
       renderItem={({ item }) => (
         <Image
-          source={{ uri: `${API_URL}${item.path}` }}
+          source={{ uri: mediaUrl(item.path) }}
           style={{ width: gridItemSize, height: gridItemSize }}
           contentFit="cover"
           cachePolicy="memory-disk"
@@ -183,9 +183,9 @@ export default function ProfileScreen() {
           <View style={styles.avatarRow}>
             <View style={styles.avatarColumn}>
               <Pressable onPress={onAvatarPress} disabled={uploading}>
-                {user?.profilePicture ? (
+                {avatarUri ? (
                   <Image
-                    source={{ uri: `${API_URL}${user.profilePicture}` }}
+                    source={{ uri: avatarUri }}
                     style={styles.avatar}
                     contentFit="cover"
                     cachePolicy="memory-disk"
@@ -193,9 +193,7 @@ export default function ProfileScreen() {
                   />
                 ) : (
                   <View style={[styles.avatar, styles.avatarPlaceholder]}>
-                    <Text style={styles.avatarInitial}>
-                      {user?.name?.[0] ?? '?'}
-                    </Text>
+                    <Text style={styles.avatarInitial}>{user.name[0]}</Text>
                   </View>
                 )}
                 <View style={styles.cameraBadge}>
@@ -206,7 +204,7 @@ export default function ProfileScreen() {
                   )}
                 </View>
               </Pressable>
-              {Platform.OS === 'web' && user?.profilePicture && (
+              {IS_WEB && avatarUri && (
                 <Pressable onPress={onRemovePress} disabled={uploading}>
                   <Text style={styles.removePhoto}>Remover foto</Text>
                 </Pressable>
@@ -215,16 +213,19 @@ export default function ProfileScreen() {
 
             <View style={styles.headerInfo}>
               <View style={styles.nameRow}>
-                <Text style={styles.name}>{user?.name ?? user?.username}</Text>
-                <Pressable onPress={() => router.push('/edit-profile')} hitSlop={8}>
+                <Text style={styles.name}>{user.name}</Text>
+                <Pressable
+                  onPress={() => router.push('/edit-profile')}
+                  hitSlop={8}
+                >
                   <Ionicons name="pencil" size={16} color={Brand.textMuted} />
                 </Pressable>
               </View>
-              <Text style={styles.email}>{user?.username}</Text>
+              <Text style={styles.email}>{user.username}</Text>
             </View>
           </View>
 
-          {user?.bio && <Text style={styles.bio}>{user?.bio}</Text>}
+          {user.bio && <Text style={styles.bio}>{user.bio}</Text>}
           <Pressable
             onPress={() => router.push('/create-post')}
             style={styles.newPostButton}
@@ -237,7 +238,13 @@ export default function ProfileScreen() {
         postsLoading ? (
           <ActivityIndicator color={Brand.primary} />
         ) : (
-          <Text style={postsError ? styles.postsError : styles.emptyText}>
+          <Text
+            style={[
+              styles.message,
+              styles.listMessage,
+              postsError ? styles.messageError : null,
+            ]}
+          >
             {postsError || 'Nenhuma publicação ainda'}
           </Text>
         )
@@ -253,11 +260,17 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  error: {
+  message: {
     fontFamily: 'Lato',
     fontSize: 14,
-    color: Brand.error,
+    color: Brand.textMuted,
     textAlign: 'center',
+  },
+  messageError: {
+    color: Brand.error,
+  },
+  listMessage: {
+    marginTop: 24,
   },
   container: {
     flex: 1,
@@ -341,9 +354,6 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   newPostButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
     marginTop: 4,
   },
   gridRow: {
@@ -351,17 +361,5 @@ const styles = StyleSheet.create({
   },
   gridSeparator: {
     height: GRID_GAP,
-  },
-  emptyText: {
-    fontFamily: 'Lato',
-    fontSize: 14,
-    color: Brand.textMuted,
-    marginTop: 24,
-  },
-  postsError: {
-    fontFamily: 'Lato',
-    fontSize: 14,
-    color: Brand.error,
-    marginTop: 24,
   },
 });

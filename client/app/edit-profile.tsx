@@ -1,3 +1,4 @@
+import { useSessionGuard } from '@/hooks/useSessionGuard';
 import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import {
@@ -15,6 +16,7 @@ import { UserService } from '@/services/user.service';
 
 export default function EditProfileScreen() {
   const router = useRouter();
+  const handleSessionExpired = useSessionGuard();
 
   const [name, setName] = useState('');
   const [username, setUsername] = useState('');
@@ -26,11 +28,12 @@ export default function EditProfileScreen() {
   useEffect(() => {
     const loadProfile = async () => {
       try {
-        const { data } = await UserService.getMe();
-        setName(data.name);
-        setUsername(data.username);
-        setBio(data.bio ?? '');
+        const profile = await UserService.getMe();
+        setName(profile.name);
+        setUsername(profile.username);
+        setBio(profile.bio ?? '');
       } catch (err) {
+        if (await handleSessionExpired(err)) return;
         setError(err instanceof Error ? err.message : 'Não foi possível conectar');
       } finally {
         setLoading(false);
@@ -38,7 +41,7 @@ export default function EditProfileScreen() {
     };
 
     loadProfile();
-  }, []);
+  }, [handleSessionExpired]);
 
   const saveProfile = async () => {
     if (!name.trim() || !username.trim()) {
@@ -56,6 +59,7 @@ export default function EditProfileScreen() {
       });
       router.back();
     } catch (err) {
+      if (await handleSessionExpired(err)) return;
       setError(err instanceof Error ? err.message : 'Não foi possível conectar.');
     } finally {
       setSaving(false);
