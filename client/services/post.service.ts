@@ -8,6 +8,12 @@ export type Post = {
   userId: number;
 };
 
+export type PostWithAuthor = Post & {
+  authorUsername: string;
+  authorName: string;
+  authorProfilePicture: string;
+}
+
 export class PostService {
   static getMyPosts(): Promise<Post[]> {
     return apiData<Post[]>('/posts');
@@ -31,7 +37,7 @@ export class PostService {
     });
   }
 
-  static getFeed(): Promise<Post[]> {
-    return apiData<Post[]>('/posts/feed');
+  static getFeed(): Promise<PostWithAuthor[]> {
+    return apiData<PostWithAuthor[]>('/posts/feed');
   }
 }

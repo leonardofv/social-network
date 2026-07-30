@@ -1,7 +1,7 @@
 import { Brand } from '@/constants/Colors';
 import { useSessionGuard } from '@/hooks/useSessionGuard';
 import { mediaUrl } from '@/services/api';
-import { Post, PostService } from '@/services/post.service';
+import { PostService, PostWithAuthor } from '@/services/post.service';
 import { clearToken } from '@/utils';
 import { Image } from 'expo-image';
 import { useFocusEffect, useRouter } from 'expo-router';
@@ -16,7 +16,7 @@ import {
 } from 'react-native';
 
 export default function HomeScreen() {
-  const [posts, setPosts] = useState<Post[]>([]);
+  const [posts, setPosts] = useState<PostWithAuthor[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
@@ -57,17 +57,34 @@ export default function HomeScreen() {
       keyExtractor={(item) => item.id.toString()}
       ItemSeparatorComponent={() => <View style={styles.separator} />}
       renderItem={({ item }) => (
-        <Pressable onPress={() => router.push(`/post/${item.id}`)}>
-          <Image
-            source={{ uri: mediaUrl(item.path) }}
-            style={styles.image}
-            contentFit="cover"
-            cachePolicy="memory-disk"
-          />
-          {item.description ? (
-            <Text style={styles.description}>{item.description}</Text>
-          ) : null}
-        </Pressable>
+        <View>
+          <View style={styles.authorRow}>
+            {item.authorProfilePicture ? (
+              <Image 
+                source={{ uri: mediaUrl(item.authorProfilePicture) }}
+                style={styles.authorAvatar}
+                contentFit="cover"
+                cachePolicy="memory-disk"
+              />
+            ) : (
+              <View style={[styles.authorAvatar, styles.authorAvatarPlaceholder]}>
+                <Text style={styles.authorInitial}>{item.authorName[0]}</Text>
+              </View>
+            )}
+            <Text style={styles.authorName}>{item.authorName}</Text>
+          </View>
+          <Pressable onPress={() => router.push(`/post/${item.id}`)}>
+            <Image
+              source={{ uri: mediaUrl(item.path) }}
+              style={styles.image}
+              contentFit="cover"
+              cachePolicy="memory-disk"
+            />
+            {item.description ? (
+              <Text style={styles.description}>{item.description}</Text>
+            ) : null}
+          </Pressable>
+        </View>
       )}
       ListHeaderComponent={
         <Pressable onPress={onLogout} style={styles.logout}>
@@ -108,6 +125,34 @@ const styles = StyleSheet.create({
   separator: {
     height: 16,
   },
+  authorRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingHorizontal: 12,
+    paddingBottom: 8,
+  },
+  authorAvatar: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+  },
+  authorAvatarPlaceholder: {
+    backgroundColor: Brand.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  authorInitial: {
+    fontFamily: 'LatoBold',
+    fontSize: 14,
+    color: '#fff',
+  },
+  authorName: {
+    fontFamily: 'LatoBold',
+    fontSize: 14,
+    color: Brand.text,
+  },
+
   loading: {
     marginTop: 24,
   },

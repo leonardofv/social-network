@@ -9,6 +9,12 @@ type Post = {
   description?: string;
 };
 
+type PostWithAuthor = Post & {
+  authorUsername: string;
+  authorName: string;
+  authorProfilePicture: string | null;
+}
+
 export const create = async ({
   path,
   userId,
@@ -28,15 +34,20 @@ export const create = async ({
   };
 };
 
-export const getAll = async (): Promise<Post[]> => {
+export const getAll = async (): Promise<PostWithAuthor[]> => {
   return db
-    .column('id', 'path', 'description', {
-      publishDate: 'publish_date',
-      userId: 'user_id',
+    .column('post.id', 'post.path', 'post.description', {
+      publishDate: 'post.publish_date',
+      userId: 'post.user_id',
+      authorUsername: 'users.username',
+      authorName: 'user_profile.name',
+      authorProfilePicture: 'user_profile.profile_picture',
     })
     .select()
     .from('post')
-    .orderBy('publish_date', 'desc');
+    .join('users', 'post.user_id', 'users.id')
+    .join('user_profile', 'post.user_id', 'user_profile.user_id')
+    .orderBy('post.publish_date', 'desc');
 };
 
 export const getById = async (id: number): Promise<Post | undefined> => {
