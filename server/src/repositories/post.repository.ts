@@ -39,6 +39,18 @@ export const getAll = async (): Promise<Post[]> => {
     .orderBy('publish_date', 'desc');
 };
 
+export const getById = async (id: number): Promise<Post | undefined> => {
+  return db
+    .column('id', 'path', 'description', {
+      publishDate: 'publish_date',
+      userId: 'user_id',
+    })
+    .select()
+    .from('post')
+    .where({ id })
+    .first();
+};
+
 export const getByUserId = async (userId: User['id']): Promise<Post[]> => {
   return db
     .column('id', 'path', 'description', {

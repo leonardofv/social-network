@@ -170,12 +170,14 @@ export default function ProfileScreen() {
       columnWrapperStyle={styles.gridRow}
       ItemSeparatorComponent={() => <View style={styles.gridSeparator} />}
       renderItem={({ item }) => (
-        <Image
-          source={{ uri: mediaUrl(item.path) }}
-          style={{ width: gridItemSize, height: gridItemSize }}
-          contentFit="cover"
-          cachePolicy="memory-disk"
-        />
+        <Pressable onPress={() => router.push(`/post/${item.id}`)}>
+          <Image
+            source={{ uri: mediaUrl(item.path) }}
+            style={{ width: gridItemSize, height: gridItemSize }}
+            contentFit="cover"
+            cachePolicy="memory-disk"
+          />
+        </Pressable>
       )}
       ListHeaderComponent={
         <View style={styles.header}>

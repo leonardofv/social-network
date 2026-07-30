@@ -39,4 +39,19 @@ router.get('/', authMiddleware, async (req:AuthenticatedRequest, res) => {
   }
 });
 
+router.get('/:id', authMiddleware, async (req:AuthenticatedRequest, res) => {
+  try {
+    const post = await postRepository.getById(Number(req.params.id));
+
+    if (!post) {
+      res.status(404).json({ message: 'Post não encontrado' });
+      return;
+    }
+    res.status(200).json({ message: 'Ok', data: post });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ message: 'Algo deu errado' });
+  }
+});
+
 export default router;

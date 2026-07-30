@@ -13,6 +13,10 @@ export class PostService {
     return apiData<Post[]>('/posts');
   }
 
+  static getById(id: number): Promise<Post> {
+    return apiData<Post>(`/posts/${id}`);
+  }
+
   static async createPost(uri: string, description?: string): Promise<Post> {
     const formData = await imageFormData('image', uri, 'post.jpg');
     if (description) formData.append('description', description);
