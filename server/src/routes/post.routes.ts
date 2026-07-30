@@ -39,6 +39,17 @@ router.get('/', authMiddleware, async (req:AuthenticatedRequest, res) => {
   }
 });
 
+//List all Posts - feed
+router.get('/feed', authMiddleware, async (req: AuthenticatedRequest, res) => {
+  try {
+    const posts = await postRepository.getAll();
+    res.status(200).json({ message: 'OK', data: posts });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ message: 'Algo deu errado' });
+  }
+});
+
 router.get('/:id', authMiddleware, async (req:AuthenticatedRequest, res) => {
   try {
     const post = await postRepository.getById(Number(req.params.id));

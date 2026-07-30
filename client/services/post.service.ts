@@ -30,4 +30,8 @@ export class PostService {
       },
     });
   }
+
+  static getFeed(): Promise<Post[]> {
+    return apiData<Post[]>('/posts/feed');
+  }
 }
