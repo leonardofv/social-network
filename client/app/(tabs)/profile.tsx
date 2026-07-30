@@ -48,8 +48,7 @@ export default function ProfileScreen() {
 
   const { width: windowWidth } = useWindowDimensions();
   const contentWidth = Math.min(windowWidth, MAX_CONTENT_WIDTH);
-  const gridItemSize =
-    (contentWidth - GRID_GAP * (GRID_COLUMNS - 1)) / GRID_COLUMNS;
+  const gridItemSize = (contentWidth - GRID_GAP * (GRID_COLUMNS - 1)) / GRID_COLUMNS;
 
   const loadProfile = useCallback(async () => {
     try {
@@ -145,12 +144,11 @@ export default function ProfileScreen() {
   };
 
   const onAvatarPress = () => {
-    // O Alert com botões não existe no web: lá a remoção fica no link abaixo.
+    //remoção no link abaixo.
     if (!avatarUri || IS_WEB) {
       pickImage();
       return;
     }
-
     Alert.alert('Foto de perfil', undefined, [
       { text: 'Alterar foto', onPress: pickImage },
       { text: 'Remover foto', style: 'destructive', onPress: removePicture },
@@ -167,6 +165,7 @@ export default function ProfileScreen() {
       style={styles.container}
       contentContainerStyle={styles.content}
       data={posts}
+      keyExtractor={(item) => item.id.toString()}
       numColumns={GRID_COLUMNS}
       columnWrapperStyle={styles.gridRow}
       ItemSeparatorComponent={() => <View style={styles.gridSeparator} />}
@@ -357,6 +356,7 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   gridRow: {
+    width: '100%',
     gap: GRID_GAP,
   },
   gridSeparator: {
