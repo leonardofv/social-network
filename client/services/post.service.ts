@@ -11,7 +11,7 @@ export type Post = {
 export type PostWithAuthor = Post & {
   authorUsername: string;
   authorName: string;
-  authorProfilePicture: string;
+  authorProfilePicture: string | null;
 }
 
 export class PostService {
@@ -19,8 +19,8 @@ export class PostService {
     return apiData<Post[]>('/posts');
   }
 
-  static getById(id: number): Promise<Post> {
-    return apiData<Post>(`/posts/${id}`);
+  static getById(id: number): Promise<PostWithAuthor> {
+    return apiData<PostWithAuthor>(`/posts/${id}`);
   }
 
   static async createPost(uri: string, description?: string): Promise<Post> {

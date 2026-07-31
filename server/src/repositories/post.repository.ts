@@ -50,15 +50,20 @@ export const getAll = async (): Promise<PostWithAuthor[]> => {
     .orderBy('post.publish_date', 'desc');
 };
 
-export const getById = async (id: number): Promise<Post | undefined> => {
+export const getById = async (id: number): Promise<PostWithAuthor | undefined> => {
   return db
-    .column('id', 'path', 'description', {
-      publishDate: 'publish_date',
-      userId: 'user_id',
+    .column('post.id', 'post.path', 'post.description', {
+      publishDate: 'post.publish_date',
+      userId: 'post.user_id',
+      authorUsername: 'users.username',
+      authorName: 'user_profile.name',
+      authorProfilePicture: 'user_profile.profile_picture',
     })
     .select()
     .from('post')
-    .where({ id })
+    .join('users', 'post.user_id', 'users.id')
+    .join('user_profile', 'post.user_id', 'user_profile.user_id')
+    .where({ 'post.id': id })
     .first();
 };
 
