@@ -1,5 +1,6 @@
 import { Response, Router } from 'express';
 import * as postRepository from '../repositories/post.repository';
+import * as commentRepository from '../repositories/comment.repository';
 import { authMiddleware, type AuthenticatedRequest } from '../middlewares/auth.middleware';
 import { upload, uploadErrorHandler } from '../middlewares/upload.middleware';
 
@@ -60,6 +61,39 @@ router.get('/:id', authMiddleware, async (req:AuthenticatedRequest, res) => {
     }
     res.status(200).json({ message: 'Ok', data: post });
   } catch (error) {
+    console.log(error);
+    res.status(500).json({ message: 'Algo deu errado' });
+  }
+});
+
+router.get('/:id/comments', authMiddleware, async (req:AuthenticatedRequest, res) => {
+  try {
+    const comments = await commentRepository.getByPostId(Number(req.params.id));
+
+    res.status(200).json({ message: 'OK', data: comments });
+  } catch(error) {
+    console.log(error);
+    res.status(500).json({ message: 'Algo deu errado' });
+  }
+});
+
+router.post('/:id/comments', authMiddleware, async (req:AuthenticatedRequest, res) => {
+  const { content } = req.body;
+
+  if (!content?.trim()) {
+    res.status(400).json({ message: 'comentário não pode ser vazio' });
+    return;
+  }
+
+  try {
+    const comment = await commentRepository.create({
+      postId: Number(req.params.id),
+      userId: req.userId!,
+      content
+    });
+
+    res.status(201).json({ message: 'OK', data: comment });
+  } catch(error) {
     console.log(error);
     res.status(500).json({ message: 'Algo deu errado' });
   }
