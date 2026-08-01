@@ -2,18 +2,17 @@ import { CommentInput } from '@/components/CommentInput';
 import { CommentItem } from '@/components/CommentItem';
 import { UserAvatar } from '@/components/ui/UserAvatar';
 import { Brand } from '@/constants/Colors';
+import { useKeyboardHeight } from '@/hooks/useKeyboardHeight';
 import { useSessionGuard } from '@/hooks/useSessionGuard';
 import { mediaUrl } from '@/services/api';
 import { CommentService, CommentWithAuthor } from '@/services/comment.service';
 import { PostWithAuthor, PostService } from '@/services/post.service';
 import { Image } from 'expo-image';
 import { useLocalSearchParams } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   FlatList,
-  KeyboardAvoidingView,
-  Platform,
   StyleSheet,
   Text,
   View,
@@ -29,6 +28,8 @@ export default function PostDetailScreen() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const handleSessionExpired = useSessionGuard();
+  const listRef = useRef<FlatList<CommentWithAuthor>>(null);
+  const keyboardHeight = useKeyboardHeight();
 
   useEffect(() => {
     Promise.all([
@@ -52,6 +53,7 @@ export default function PostDetailScreen() {
     try {
       const created = await CommentService.create(postId, content);
       setComments((prev) => [...prev, created]);
+      listRef.current?.scrollToEnd({ animated: true });
     } catch (err) {
       if (await handleSessionExpired(err)) return;
       throw err; // o CommentInput mostra a mensagem e preserva o texto
@@ -75,11 +77,9 @@ export default function PostDetailScreen() {
   }
 
   return (
-    <KeyboardAvoidingView
-      style={styles.flex}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-    >
+    <View style={styles.flex}>
       <FlatList
+        ref={listRef}
         style={styles.flex}
         contentContainerStyle={styles.container}
         data={comments}
@@ -110,7 +110,8 @@ export default function PostDetailScreen() {
         }
       />
       <CommentInput onSubmit={addComment} />
-    </KeyboardAvoidingView>
+      <View style={{ height: keyboardHeight }} />
+    </View>
   );
 }
 
