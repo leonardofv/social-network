@@ -67,8 +67,16 @@ router.get('/:id', authMiddleware, async (req:AuthenticatedRequest, res) => {
 });
 
 router.get('/:id/comments', authMiddleware, async (req:AuthenticatedRequest, res) => {
+
+  const postId = Number(req.params.id);
+
+  if (!Number.isInteger(postId)) {
+    res.status(400).json({ message: 'Id de post inválido' });
+    return;
+  }
+
   try {
-    const comments = await commentRepository.getByPostId(Number(req.params.id));
+    const comments = await commentRepository.getByPostId(postId);
 
     res.status(200).json({ message: 'OK', data: comments });
   } catch(error) {
@@ -78,16 +86,35 @@ router.get('/:id/comments', authMiddleware, async (req:AuthenticatedRequest, res
 });
 
 router.post('/:id/comments', authMiddleware, async (req:AuthenticatedRequest, res) => {
-  const { content } = req.body;
 
-  if (!content?.trim()) {
-    res.status(400).json({ message: 'comentário não pode ser vazio' });
+  const postId = Number(req.params.id);
+
+  if (!Number.isInteger(postId)) {
+    res.status(400).json({ message: 'Id de post inválido' });
+    return;
+  }
+
+  const content = typeof req.body.content === 'string' ? req.body.content.trim() : '';
+
+  if (!content) {
+    res.status(400).json({ message: 'Comentário não pode ser vazio' });
+    return;
+  }
+  if (content.length > 500) {
+    res.status(400).json({ message: 'Comentário não pode ser maior que 500 caracteres' });
     return;
   }
 
   try {
+    const post = await postRepository.getById(postId);
+
+    if (!post) {
+      res.status(404).json({ message: 'Post não encontrado' });
+      return;
+    }
+
     const comment = await commentRepository.create({
-      postId: Number(req.params.id),
+      postId,
       userId: req.userId!,
       content
     });
