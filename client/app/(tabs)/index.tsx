@@ -1,3 +1,4 @@
+import { UserAvatar } from '@/components/ui/UserAvatar';
 import { Brand } from '@/constants/Colors';
 import { useSessionGuard } from '@/hooks/useSessionGuard';
 import { mediaUrl } from '@/services/api';
@@ -59,18 +60,7 @@ export default function HomeScreen() {
       renderItem={({ item }) => (
         <View>
           <View style={styles.authorRow}>
-            {item.authorProfilePicture ? (
-              <Image 
-                source={{ uri: mediaUrl(item.authorProfilePicture) }}
-                style={styles.authorAvatar}
-                contentFit="cover"
-                cachePolicy="memory-disk"
-              />
-            ) : (
-              <View style={[styles.authorAvatar, styles.authorAvatarPlaceholder]}>
-                <Text style={styles.authorInitial}>{item.authorName[0]}</Text>
-              </View>
-            )}
+            <UserAvatar name={item.authorName} picture={item.authorProfilePicture}/>
             <Text style={styles.authorName}>{item.authorName}</Text>
           </View>
           <Pressable onPress={() => router.push(`/post/${item.id}`)}>
@@ -131,21 +121,6 @@ const styles = StyleSheet.create({
     gap: 8,
     paddingHorizontal: 12,
     paddingBottom: 8,
-  },
-  authorAvatar: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-  },
-  authorAvatarPlaceholder: {
-    backgroundColor: Brand.primary,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  authorInitial: {
-    fontFamily: 'LatoBold',
-    fontSize: 14,
-    color: '#fff',
   },
   authorName: {
     fontFamily: 'LatoBold',

@@ -1,13 +1,19 @@
+import { CommentInput } from '@/components/CommentInput';
+import { CommentItem } from '@/components/CommentItem';
+import { UserAvatar } from '@/components/ui/UserAvatar';
 import { Brand } from '@/constants/Colors';
 import { useSessionGuard } from '@/hooks/useSessionGuard';
 import { mediaUrl } from '@/services/api';
+import { CommentService, CommentWithAuthor } from '@/services/comment.service';
 import { PostWithAuthor, PostService } from '@/services/post.service';
 import { Image } from 'expo-image';
 import { useLocalSearchParams } from 'expo-router';
 import { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
-  ScrollView,
+  FlatList,
+  KeyboardAvoidingView,
+  Platform,
   StyleSheet,
   Text,
   View,
@@ -16,24 +22,41 @@ import {
 export default function PostDetailScreen() {
   // id vem do segmento dinâmico da rota (client/app/post/[id].tsx)
   const { id } = useLocalSearchParams<{ id: string }>();
+  const postId = Number(id);
 
   const [post, setPost] = useState<PostWithAuthor | null>(null);
+  const [comments, setComments] = useState<CommentWithAuthor[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const handleSessionExpired = useSessionGuard();
 
   useEffect(() => {
-    PostService.getById(Number(id))
-      .then(setPost)
+    Promise.all([
+      PostService.getById(postId),
+      CommentService.getByPostId(postId),
+    ])
+      .then(([loadedPost, loadedComments]) => {
+        setPost(loadedPost);
+        setComments(loadedComments);
+      })
       .catch(async (err) => {
-        //o hook já limpa o token e redireciona pro login.
         if (await handleSessionExpired(err)) return;
         setError(
           err instanceof Error ? err.message : 'Não foi possível conectar',
         );
       })
       .finally(() => setLoading(false));
-  }, [id, handleSessionExpired]);
+  }, [postId, handleSessionExpired]);
+
+  const addComment = async (content: string) => {
+    try {
+      const created = await CommentService.create(postId, content);
+      setComments((prev) => [...prev, created]);
+    } catch (err) {
+      if (await handleSessionExpired(err)) return;
+      throw err; // o CommentInput mostra a mensagem e preserva o texto
+    }
+  };
 
   if (loading) {
     return (
@@ -52,31 +75,42 @@ export default function PostDetailScreen() {
   }
 
   return (
-    <ScrollView style={styles.flex} contentContainerStyle={styles.container}>
-      <View style={styles.authorRow}>
-        {post.authorProfilePicture ? (
-          <Image
-            source={{ uri: mediaUrl(post.authorProfilePicture) }}
-            style={styles.authorAvatar}
-            contentFit="cover"
-            cachePolicy="memory-disk"
-          />
-        ) : (
-          <View style={[styles.authorAvatar, styles.authorAvatarPlaceholder]}>
-            <Text style={styles.authorInitial}>{post.authorName[0]}</Text>
+    <KeyboardAvoidingView
+      style={styles.flex}
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+    >
+      <FlatList
+        style={styles.flex}
+        contentContainerStyle={styles.container}
+        data={comments}
+        keyExtractor={(item) => item.id.toString()}
+        keyboardShouldPersistTaps="handled"
+        renderItem={({ item }) => <CommentItem comment={item} />}
+        ListHeaderComponent={
+          <View>
+            <View style={styles.authorRow}>
+              <UserAvatar
+                name={post.authorName}
+                picture={post.authorProfilePicture}
+              />
+              <Text style={styles.authorName}>{post.authorName}</Text>
+            </View>
+            <Image
+              source={{ uri: mediaUrl(post.path) }}
+              style={styles.image}
+              contentFit="cover"
+            />
+            {post.description && (
+              <Text style={styles.description}>{post.description}</Text>
+            )}
           </View>
-        )}
-        <Text style={styles.authorName}>{post.authorName}</Text>
-      </View>
-      <Image
-        source={{ uri: mediaUrl(post.path) }}
-        style={styles.image}
-        contentFit="cover"
+        }
+        ListEmptyComponent={
+          <Text style={styles.empty}>Nenhum comentário ainda</Text>
+        }
       />
-      {post.description && (
-        <Text style={styles.description}>{post.description}</Text>
-      )}
-    </ScrollView>
+      <CommentInput onSubmit={addComment} />
+    </KeyboardAvoidingView>
   );
 }
 
@@ -101,27 +135,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingBottom: 8,
   },
-  authorAvatar: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-  },
-  authorAvatarPlaceholder: {
-    backgroundColor: Brand.primary,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  authorInitial: {
-    fontFamily: 'LatoBold',
-    fontSize: 14,
-    color: '#fff',
-  },
   authorName: {
     fontFamily: 'LatoBold',
     fontSize: 14,
     color: Brand.text,
   },
-
   image: {
     width: '100%',
     aspectRatio: 1,
@@ -131,6 +149,13 @@ const styles = StyleSheet.create({
     fontSize: 15,
     color: Brand.text,
     padding: 16,
+  },
+  empty: {
+    fontFamily: 'Lato',
+    fontSize: 14,
+    color: Brand.textMuted,
+    textAlign: 'center',
+    paddingVertical: 24,
   },
   error: {
     fontFamily: 'Lato',
