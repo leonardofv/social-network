@@ -2,8 +2,6 @@ import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import {
-  KeyboardAvoidingView,
-  Platform,
   ScrollView,
   StyleSheet,
   Text,
@@ -13,10 +11,11 @@ import { PrimaryButton } from '@/components/ui/PrimaryButton';
 import { TextField } from '@/components/ui/TextField';
 import { Brand } from '@/constants/Colors';
 import { AuthService } from '@/services/auth.service';
+import { useKeyboardHeight } from '@/hooks/useKeyboardHeight';
 
 export default function RegisterScreen() {
   const router = useRouter();
-
+  
   const [username, setUsername] = useState('');
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -24,6 +23,7 @@ export default function RegisterScreen() {
   const [password2, setPassword2] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const keyboardHeight = useKeyboardHeight();
 
   const registerUser = async () => {
     if (
@@ -63,10 +63,7 @@ export default function RegisterScreen() {
   };
 
   return (
-    <KeyboardAvoidingView
-      style={styles.flex}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-    >
+    <View style={styles.flex}>
       <ScrollView
         style={styles.flex}
         contentContainerStyle={styles.container}
@@ -147,7 +144,8 @@ export default function RegisterScreen() {
           </View>
         </View>
       </ScrollView>
-    </KeyboardAvoidingView>
+      <View style={{ height: keyboardHeight }} />
+    </View>
   );
 }
 
