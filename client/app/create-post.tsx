@@ -2,8 +2,6 @@ import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import * as ImagePicker from 'expo-image-picker';
 import {
-  KeyboardAvoidingView,
-  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -16,6 +14,7 @@ import { PrimaryButton } from '@/components/ui/PrimaryButton';
 import { TextField } from '@/components/ui/TextField';
 import { Brand } from '@/constants/Colors';
 import { PostService } from '@/services/post.service';
+import { useKeyboardHeight } from '@/hooks/useKeyboardHeight';
 
 export default function CreatePostScreen() {
   const router = useRouter();
@@ -24,6 +23,7 @@ export default function CreatePostScreen() {
   const [description, setDescription] = useState('');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+  const keyboardHeight = useKeyboardHeight();
 
   const pickImage = async () => {
     const result = await ImagePicker.launchImageLibraryAsync({
@@ -56,10 +56,7 @@ export default function CreatePostScreen() {
   };
 
   return (
-    <KeyboardAvoidingView
-      style={styles.flex}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-    >
+    <View style={styles.flex}>
       <ScrollView
         style={styles.flex}
         contentContainerStyle={styles.container}
@@ -94,7 +91,8 @@ export default function CreatePostScreen() {
           <PrimaryButton title="Publicar" onPress={publish} loading={saving} />
         </View>
       </ScrollView>
-    </KeyboardAvoidingView>
+      <View style={{ height: keyboardHeight }} />
+    </View>
   );
 }
 

@@ -1,9 +1,6 @@
-import { useSessionGuard } from '@/hooks/useSessionGuard';
 import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import {
-  KeyboardAvoidingView,
-  Platform,
   ScrollView,
   StyleSheet,
   Text,
@@ -13,6 +10,8 @@ import { PrimaryButton } from '@/components/ui/PrimaryButton';
 import { TextField } from '@/components/ui/TextField';
 import { Brand } from '@/constants/Colors';
 import { UserService } from '@/services/user.service';
+import { useSessionGuard } from '@/hooks/useSessionGuard';
+import { useKeyboardHeight } from '@/hooks/useKeyboardHeight';
 
 export default function EditProfileScreen() {
   const router = useRouter();
@@ -24,6 +23,7 @@ export default function EditProfileScreen() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+  const keyboardHeight = useKeyboardHeight();
 
   useEffect(() => {
     const loadProfile = async () => {
@@ -69,10 +69,7 @@ export default function EditProfileScreen() {
   if (loading) return null;
 
   return (
-    <KeyboardAvoidingView
-      style={styles.flex}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-    >
+    <View style={styles.flex}>
       <ScrollView
         style={styles.flex}
         contentContainerStyle={styles.container}
@@ -112,7 +109,8 @@ export default function EditProfileScreen() {
           <PrimaryButton title="Salvar" onPress={saveProfile} loading={saving} />
         </View>
       </ScrollView>
-    </KeyboardAvoidingView>
+      <View style={{ height: keyboardHeight }} />
+    </View>
   );
 }
 
