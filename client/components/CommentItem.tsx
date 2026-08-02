@@ -1,9 +1,15 @@
 import { UserAvatar } from '@/components/ui/UserAvatar';
 import { Brand } from '@/constants/Colors';
 import { CommentWithAuthor } from '@/services/comment.service';
-import { StyleSheet, Text, View } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 
-export function CommentItem({ comment }: { comment: CommentWithAuthor }) {
+type CommentItemProps = {
+  comment: CommentWithAuthor;
+  onDelete?: () => void;
+}
+
+export function CommentItem({ comment, onDelete }: CommentItemProps) {
   return (
     <View style={styles.row}>
       <UserAvatar
@@ -15,6 +21,17 @@ export function CommentItem({ comment }: { comment: CommentWithAuthor }) {
         <Text style={styles.author}>{comment.authorName}</Text>
         <Text style={styles.content}>{comment.content}</Text>
       </View>
+      {onDelete && (
+        <Pressable
+          onPress={onDelete}
+          hitSlop={8}
+          style={styles.deleteButton}
+          accessibilityRole="button"
+          accessibilityLabel="Excluir comentário"
+        >
+          <Ionicons name='trash-outline' size={18} color={Brand.textMuted} /> 
+        </Pressable>
+      )}
     </View>
   );
 }
@@ -39,5 +56,8 @@ const styles = StyleSheet.create({
     fontFamily: 'Lato',
     fontSize: 14,
     color: Brand.text,
+  },
+  deleteButton: {
+    alignSelf: 'center',
   },
 });

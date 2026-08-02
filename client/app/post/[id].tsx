@@ -2,6 +2,7 @@ import { CommentInput } from '@/components/CommentInput';
 import { CommentItem } from '@/components/CommentItem';
 import { UserAvatar } from '@/components/ui/UserAvatar';
 import { Brand } from '@/constants/Colors';
+import { useCurrentUser } from '@/contexts/UserContext';
 import { useKeyboardHeight } from '@/hooks/useKeyboardHeight';
 import { useSessionGuard } from '@/hooks/useSessionGuard';
 import { mediaUrl } from '@/services/api';
@@ -12,16 +13,39 @@ import { useLocalSearchParams } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
+  Alert,
   FlatList,
+  Platform,
   StyleSheet,
   Text,
   View,
 } from 'react-native';
 
+const showError = (message: string) => {
+  if (Platform.OS === 'web') {
+    window.alert(message);
+    return;
+  }
+  Alert.alert('Erro', message);
+};
+
+const confirmDelete = (onConfirm: () => void) => {
+  if (Platform.OS === 'web') {
+    if (window.confirm('Excluir este comentário?')) onConfirm();
+    return;
+  }
+
+  Alert.alert('Excluir comentário', 'Essa ação não pode ser desfeita.', [
+    { text: 'Cancelar', style: 'cancel' },
+    { text: 'Excluir', style: 'destructive', onPress: onConfirm },
+  ]);
+};
+
 export default function PostDetailScreen() {
   // id vem do segmento dinâmico da rota (client/app/post/[id].tsx)
   const { id } = useLocalSearchParams<{ id: string }>();
   const postId = Number(id);
+  const { user } = useCurrentUser();
 
   const [post, setPost] = useState<PostWithAuthor | null>(null);
   const [comments, setComments] = useState<CommentWithAuthor[]>([]);
@@ -60,6 +84,18 @@ export default function PostDetailScreen() {
     }
   };
 
+  const deleteComment = async (commentId: number) => {
+    try {
+      await CommentService.remove(postId, commentId);
+      setComments((prev) => prev.filter((c) => c.id !== commentId));
+    } catch (err) {
+      if (await handleSessionExpired(err)) return;
+      showError(
+        err instanceof Error ? err.message : 'Não foi possível excluir',
+      );
+    }
+  };
+
   if (loading) {
     return (
       <View style={styles.center}>
@@ -85,7 +121,16 @@ export default function PostDetailScreen() {
         data={comments}
         keyExtractor={(item) => item.id.toString()}
         keyboardShouldPersistTaps="handled"
-        renderItem={({ item }) => <CommentItem comment={item} />}
+        renderItem={({ item }) => (
+          <CommentItem
+            comment={item}
+            onDelete={
+              item.userId === user?.id
+                ? () => confirmDelete(() => deleteComment(item.id))
+                : undefined
+            }
+          />
+        )}
         ListHeaderComponent={
           <View>
             <View style={styles.authorRow}>

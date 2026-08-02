@@ -126,4 +126,35 @@ router.post('/:id/comments', authMiddleware, async (req:AuthenticatedRequest, re
   }
 });
 
+router.delete('/:id/comments/:commentId', authMiddleware, async (req: AuthenticatedRequest, res) => {
+  const postId = Number(req.params.id);
+  const commentId = Number(req.params.commentId);
+
+  if (!Number.isInteger(postId) || !Number.isInteger(commentId)) {
+    res.status(400).json({ message: 'Id inválido' });
+    return;
+  }
+
+  try {
+    const comment = await commentRepository.getById(commentId);
+
+    if (!comment || comment.postId !== postId) {
+      res.status(404).json({ message: 'Comentário não encontrado' });
+      return;
+    }
+
+    if (comment.userId !== req.userId) {
+      res.status(403).json({ message: 'Você só pode excluir seus próprios comentários' });
+      return;
+    }
+
+    await commentRepository.remove(commentId);
+
+    res.status(200).json({ message: 'Comentário excluído', data: null });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ message: 'Algo deu errado' });
+  }
+});
+
 export default router;

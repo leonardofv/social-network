@@ -39,6 +39,24 @@ export const create = async ({ postId, userId, content }: Omit<Comment, 'id' | '
     return commentWithAuthor().where(`post_comment.id`, inserted.id).first();
 }
 
+export const getById = async (id: number): Promise<Comment | null> => {
+    const comment = await db('post_comment')
+        .column('id', 'content', {
+            postId: 'post_id',
+            userId: 'user_id',
+            commentDate: 'comment_date',
+        })
+        .select()
+        .where({ id })
+        .first();
+
+    return comment ?? null;
+}
+
+export const remove = async (id: number): Promise<void> => {
+    await db('post_comment').where({ id }).del();
+}
+
 export const getByPostId = async (postId: number): Promise<CommentWithAuthor[]> => {
     return commentWithAuthor()
         .where({ 'post_comment.post_id': postId })

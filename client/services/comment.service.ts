@@ -1,4 +1,4 @@
-import { apiData } from '@/services/api';
+import { apiData, apiFetch } from '@/services/api';
 
 export type CommentWithAuthor = {
   id: number;
@@ -24,6 +24,16 @@ export class CommentService {
       errors: {
         400: 'Comentário inválido.',
         404: 'Esse post não existe mais.',
+      },
+    });
+  }
+
+  static remove(postId: number, commentId: number): Promise<void> {
+    return apiFetch(`/posts/${postId}/comments/${commentId}`, {
+      method: 'DELETE',
+      errors: {
+        403: 'Você só pode excluir seus próprios comentários.',
+        404: 'Esse comentário não existe mais.',
       },
     });
   }
