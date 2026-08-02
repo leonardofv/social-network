@@ -25,6 +25,8 @@ const GRID_COLUMNS = 3;
 const GRID_GAP = 2;
 const MAX_CONTENT_WIDTH = 420;
 const HEADER_PADDING = 24;
+const AVATAR_SIZE = 80;
+const HEADER_GUTTER = 10;
 const IS_WEB = Platform.OS === 'web';
 
 const showError = (message: string) => {
@@ -200,7 +202,7 @@ export default function ProfileScreen() {
                   {uploading ? (
                     <ActivityIndicator size="small" color="#fff" />
                   ) : (
-                    <Ionicons name="camera" size={16} color="#fff" />
+                    <Ionicons name="camera" size={11} color="#fff" />
                   )}
                 </View>
               </Pressable>
@@ -228,9 +230,14 @@ export default function ProfileScreen() {
           {user.bio && <Text style={styles.bio}>{user.bio}</Text>}
           <Pressable
             onPress={() => router.push('/create-post')}
-            style={styles.newPostButton}
+            accessibilityRole="button"
+            style={({ pressed }) => [
+              styles.newPostButton,
+              pressed && styles.newPostButtonPressed,
+            ]}
           >
-            <Ionicons name="add-circle-outline" size={18} />
+            <Ionicons name="add" size={18} color="#fff" />
+            <Text style={styles.newPostLabel}>Novo post</Text>
           </Pressable>
         </View>
       }
@@ -271,35 +278,35 @@ const styles = StyleSheet.create({
   },
   listMessage: {
     marginTop: 24,
+    alignSelf: 'stretch'
   },
   container: {
     flex: 1,
     backgroundColor: Brand.background,
   },
   content: {
-    alignItems: 'center',
+    alignItems: 'flex-start',
     paddingVertical: HEADER_PADDING,
   },
   header: {
-    width: '100%',
-    alignItems: 'center',
-    paddingHorizontal: HEADER_PADDING,
     gap: 8,
     marginBottom: 16,
+    paddingHorizontal: HEADER_GUTTER,
   },
   avatarRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 16,
+    gap: 8
   },
   avatarColumn: {
     alignItems: 'center',
-    gap: 4,
+    gap: 2,
+    paddingVertical: 10,
   },
   avatar: {
-    width: 96,
-    height: 96,
-    borderRadius: 48,
+    width: AVATAR_SIZE,
+    height: AVATAR_SIZE,
+    borderRadius: AVATAR_SIZE / 2,
   },
   avatarPlaceholder: {
     backgroundColor: Brand.primary,
@@ -308,17 +315,17 @@ const styles = StyleSheet.create({
   },
   avatarInitial: {
     fontFamily: 'LatoBold',
-    fontSize: 36,
+    fontSize: AVATAR_SIZE * 0.44,
     color: '#fff',
   },
   cameraBadge: {
     position: 'absolute',
-    bottom: 0,
+    bottom: -5,
     right: 0,
     backgroundColor: Brand.primary,
     borderRadius: 14,
-    width: 28,
-    height: 28,
+    width: 22,
+    height: 22,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 2,
@@ -339,7 +346,7 @@ const styles = StyleSheet.create({
   },
   name: {
     fontFamily: 'LatoBold',
-    fontSize: 22,
+    fontSize: 16,
     color: Brand.text,
   },
   email: {
@@ -354,10 +361,25 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   newPostButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    alignSelf: 'flex-start',
+    gap: 6,
     marginTop: 4,
+    paddingVertical: 8,
+    paddingHorizontal: 14,
+    borderRadius: 999,
+    backgroundColor: Brand.primary,
+  },
+  newPostButtonPressed: {
+    backgroundColor: Brand.primaryDark,
+  },
+  newPostLabel: {
+    fontFamily: 'LatoBold',
+    fontSize: 14,
+    color: '#fff',
   },
   gridRow: {
-    width: '100%',
     gap: GRID_GAP,
   },
   gridSeparator: {
