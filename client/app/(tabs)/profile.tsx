@@ -2,7 +2,7 @@ import { Brand } from '@/constants/Colors';
 import { useSessionGuard } from '@/hooks/useSessionGuard';
 import { mediaUrl } from '@/services/api';
 import { Post, PostService } from '@/services/post.service';
-import { UserProfile, UserService } from '@/services/user.service';
+import { UserService } from '@/services/user.service';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useState } from 'react';
 import {
@@ -19,6 +19,7 @@ import {
 import * as ImagePicker from 'expo-image-picker';
 import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
+import { useCurrentUser } from '@/contexts/UserContext';
 
 const GRID_COLUMNS = 3;
 const GRID_GAP = 2;
@@ -35,13 +36,13 @@ const showError = (message: string) => {
 };
 
 export default function ProfileScreen() {
-  const [user, setUser] = useState<UserProfile | null>(null);
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
   const [postsLoading, setPostsLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState('');
   const [postsError, setPostsError] = useState('');
+  const { user, refresh } = useCurrentUser();
 
   const router = useRouter();
   const handleSessionExpired = useSessionGuard();
@@ -52,7 +53,7 @@ export default function ProfileScreen() {
 
   const loadProfile = useCallback(async () => {
     try {
-      setUser(await UserService.getMe());
+      await refresh();
       setError('');
     } catch (err) {
       if (await handleSessionExpired(err)) return;
@@ -60,7 +61,7 @@ export default function ProfileScreen() {
     } finally {
       setLoading(false);
     }
-  }, [handleSessionExpired]);
+  }, [handleSessionExpired, refresh]);
 
   const loadPosts = useCallback(async () => {
     setPostsLoading(true);
@@ -116,10 +117,8 @@ export default function ProfileScreen() {
     setUploading(true);
 
     try {
-      const { profilePicture } = await UserService.uploadProfilePicture(
-        result.assets[0].uri,
-      );
-      setUser({ ...user, profilePicture });
+      await UserService.uploadProfilePicture(result.assets[0].uri);
+      await refresh();
     } catch (err) {
       if (await handleSessionExpired(err)) return;
       showError(
@@ -134,7 +133,7 @@ export default function ProfileScreen() {
     setUploading(true);
     try {
       await UserService.deleteProfilePicture();
-      setUser({ ...user, profilePicture: null });
+      await refresh();
     } catch (err) {
       if (await handleSessionExpired(err)) return;
       showError('Não foi possível remover a foto');

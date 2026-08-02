@@ -1,23 +1,24 @@
+import { useCurrentUser } from '@/contexts/UserContext';
 import { SessionExpiredError } from '@/services/api';
-import { clearToken } from '@/utils';
 import { useRouter } from 'expo-router';
 import { useCallback } from 'react';
 
 /**
  * Devolve um handler que retorna true quando o erro era de sessão expirada —
- * nesse caso o token já foi limpo e o redirect para o login já aconteceu.
+ * nesse caso token e usuário já foram limpos e o redirect já aconteceu.
  */
 export const useSessionGuard = () => {
   const router = useRouter();
+  const { logout } = useCurrentUser();
 
   return useCallback(
     async (error: unknown) => {
       if (!(error instanceof SessionExpiredError)) return false;
 
-      await clearToken();
+      await logout();
       router.replace('/login');
       return true;
     },
-    [router],
+    [logout, router],
   );
 };

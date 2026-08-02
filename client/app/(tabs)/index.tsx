@@ -3,7 +3,7 @@ import { Brand } from '@/constants/Colors';
 import { useSessionGuard } from '@/hooks/useSessionGuard';
 import { mediaUrl } from '@/services/api';
 import { PostService, PostWithAuthor } from '@/services/post.service';
-import { clearToken } from '@/utils';
+import { useCurrentUser } from '@/contexts/UserContext';
 import { Image } from 'expo-image';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useState } from 'react';
@@ -23,6 +23,7 @@ export default function HomeScreen() {
 
   const router = useRouter();
   const handleSessionExpired = useSessionGuard();
+  const { logout } = useCurrentUser();
 
   const loadFeed = useCallback(async () => {
     setLoading(true);
@@ -46,7 +47,7 @@ export default function HomeScreen() {
   );
 
   const onLogout = async () => {
-    await clearToken();
+    await logout();
     router.replace('/login');
   };
 

@@ -13,15 +13,17 @@ import { Brand } from '@/constants/Colors';
 import { AuthService } from '@/services/auth.service';
 import { storeToken } from '@/utils';
 import { useKeyboardHeight } from '@/hooks/useKeyboardHeight';
+import { useCurrentUser } from '@/contexts/UserContext';
 
 export default function LoginScreen() {
   const router = useRouter();
+  const keyboardHeight = useKeyboardHeight();
+  const { refresh } = useCurrentUser();
 
   const [emailOrUsername, setEmailOrUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const keyboardHeight = useKeyboardHeight();
 
   const loginUser = async () => {
     if (!emailOrUsername.trim() || !password) {
@@ -37,6 +39,7 @@ export default function LoginScreen() {
         password,
       );
       await storeToken(token);
+      await refresh();
       router.replace('/(tabs)');
     } catch (err) {
       setError(

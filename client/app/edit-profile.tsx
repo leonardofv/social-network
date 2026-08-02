@@ -12,6 +12,7 @@ import { Brand } from '@/constants/Colors';
 import { UserService } from '@/services/user.service';
 import { useSessionGuard } from '@/hooks/useSessionGuard';
 import { useKeyboardHeight } from '@/hooks/useKeyboardHeight';
+import { useCurrentUser } from '@/contexts/UserContext';
 
 export default function EditProfileScreen() {
   const router = useRouter();
@@ -24,6 +25,7 @@ export default function EditProfileScreen() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const keyboardHeight = useKeyboardHeight();
+  const { refresh } = useCurrentUser();
 
   useEffect(() => {
     const loadProfile = async () => {
@@ -57,6 +59,7 @@ export default function EditProfileScreen() {
         username: username.trim(),
         bio: bio.trim() || null,
       });
+      await refresh().catch(() => {});
       router.back();
     } catch (err) {
       if (await handleSessionExpired(err)) return;
