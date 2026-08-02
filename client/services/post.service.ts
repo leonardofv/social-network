@@ -1,4 +1,4 @@
-import { apiData, imageFormData } from '@/services/api';
+import { apiData, apiFetch, imageFormData } from '@/services/api';
 
 export type Post = {
   id: number;
@@ -34,6 +34,16 @@ export class PostService {
         400: 'Envie uma imagem válida.',
         413: 'A imagem deve ter no máximo 5MB.',
       },
+    });
+  }
+
+  static remove(postId: number): Promise<void> {
+    return apiFetch(`/posts/${postId}`, {
+      method: 'DELETE',
+      errors: {
+        403: 'Você só pode excluir seus próprios posts',
+        404: 'Esse post não existe mais',
+      }
     });
   }
 

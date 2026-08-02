@@ -8,14 +8,16 @@ import { useSessionGuard } from '@/hooks/useSessionGuard';
 import { mediaUrl } from '@/services/api';
 import { CommentService, CommentWithAuthor } from '@/services/comment.service';
 import { PostWithAuthor, PostService } from '@/services/post.service';
+import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
-import { useLocalSearchParams } from 'expo-router';
+import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
   FlatList,
   Platform,
+  Pressable,
   StyleSheet,
   Text,
   View,
@@ -29,13 +31,13 @@ const showError = (message: string) => {
   Alert.alert('Erro', message);
 };
 
-const confirmDelete = (onConfirm: () => void) => {
+const confirmDelete = (title: string, onConfirm: () => void) => {
   if (Platform.OS === 'web') {
-    if (window.confirm('Excluir este comentário?')) onConfirm();
+    if (window.confirm(title)) onConfirm();
     return;
   }
 
-  Alert.alert('Excluir comentário', 'Essa ação não pode ser desfeita.', [
+  Alert.alert(title, 'Essa ação não pode ser desfeita.', [
     { text: 'Cancelar', style: 'cancel' },
     { text: 'Excluir', style: 'destructive', onPress: onConfirm },
   ]);
@@ -46,14 +48,16 @@ export default function PostDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const postId = Number(id);
   const { user } = useCurrentUser();
+  const router = useRouter();
+  const keyboardHeight = useKeyboardHeight();
 
   const [post, setPost] = useState<PostWithAuthor | null>(null);
   const [comments, setComments] = useState<CommentWithAuthor[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const handleSessionExpired = useSessionGuard();
+  const [deleting, setDeleting] = useState(false);
   const listRef = useRef<FlatList<CommentWithAuthor>>(null);
-  const keyboardHeight = useKeyboardHeight();
 
   useEffect(() => {
     Promise.all([
@@ -96,6 +100,24 @@ export default function PostDetailScreen() {
     }
   };
 
+  const deletePost = async () => {
+    setDeleting(true);
+    try {
+      await PostService.remove(postId);
+      if (router.canGoBack()) {
+        router.back();
+      } else {
+        router.replace('/(tabs)');
+      }
+    } catch (error) {
+      setDeleting(false);
+      if (await handleSessionExpired(error)) return;
+      showError(
+        error instanceof Error ? error.message : 'Não foi possível excluir',
+      );
+    }
+  };
+
   if (loading) {
     return (
       <View style={styles.center}>
@@ -114,6 +136,23 @@ export default function PostDetailScreen() {
 
   return (
     <View style={styles.flex}>
+      {post.userId === user?.id && (
+        <Stack.Screen 
+          options={{
+            headerRight: () => (
+              <Pressable
+                onPress={() => confirmDelete('Excluir publicação ?', deletePost)}
+                disabled={deleting}
+                hitSlop={8}
+                accessibilityRole="button"
+                accessibilityLabel="Excluir Publicação"
+              >
+                <Ionicons name="trash-outline" size={20} color={Brand.primary} />
+              </Pressable>
+            )
+          }}
+        />
+      )}
       <FlatList
         ref={listRef}
         style={styles.flex}
@@ -126,7 +165,7 @@ export default function PostDetailScreen() {
             comment={item}
             onDelete={
               item.userId === user?.id
-                ? () => confirmDelete(() => deleteComment(item.id))
+                ? () => confirmDelete('Excluir comentário', () => deleteComment(item.id))
                 : undefined
             }
           />
