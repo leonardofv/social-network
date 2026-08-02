@@ -2,7 +2,7 @@ import { Response, Router } from 'express';
 import * as postRepository from '../repositories/post.repository';
 import * as commentRepository from '../repositories/comment.repository';
 import { authMiddleware, type AuthenticatedRequest } from '../middlewares/auth.middleware';
-import { upload, uploadErrorHandler } from '../middlewares/upload.middleware';
+import { removeUpload, upload, uploadErrorHandler } from '../middlewares/upload.middleware';
 
 const router = Router();
 
@@ -61,6 +61,36 @@ router.get('/:id', authMiddleware, async (req:AuthenticatedRequest, res) => {
     }
     res.status(200).json({ message: 'Ok', data: post });
   } catch (error) {
+    console.log(error);
+    res.status(500).json({ message: 'Algo deu errado' });
+  }
+});
+
+router.delete('/:id', authMiddleware, async (req:AuthenticatedRequest, res) => {
+  const postId = Number(req.params.id);
+
+  if (!Number.isInteger(postId)) {
+    res.status(400).json({ message: 'ID de post inválido' });
+    return;
+  }
+
+  try {
+    const post = await postRepository.getById(postId);
+
+    if (!post) {
+      res.status(404).json({ message: 'Post não encontrado' });
+      return;
+    }
+    if (post.userId !== req.userId) {
+      res.status(403).json({ message: 'Você só pode excluir seus próprios posts' });
+      return;
+    }
+
+    await postRepository.remove(postId);
+    await removeUpload(post.path);
+
+    res.status(200).json({ message: 'Post excluído', data: null });
+  } catch(error) {
     console.log(error);
     res.status(500).json({ message: 'Algo deu errado' });
   }

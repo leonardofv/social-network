@@ -40,3 +40,12 @@ export const uploadErrorHandler = (
     }
     next(error);
 }
+
+/** `path` vem como `/uploads/<arquivo>`; usa só o basename pra não sair da pasta. */
+export const removeUpload = async (storedPath: string) => {
+  try {
+    await fs.promises.unlink(path.join(UPLOADS_DIR, path.basename(storedPath)));
+  } catch (error) {
+    console.log('Falha ao remover arquivo do post', error);
+  }
+};

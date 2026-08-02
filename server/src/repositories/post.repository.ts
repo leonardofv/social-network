@@ -67,6 +67,10 @@ export const getById = async (id: number): Promise<PostWithAuthor | undefined> =
     .first();
 };
 
+export const remove = async (id: number) => {
+  await db('post').where({ id }).del();
+};
+
 export const getByUserId = async (userId: User['id']): Promise<Post[]> => {
   return db
     .column('id', 'path', 'description', {
