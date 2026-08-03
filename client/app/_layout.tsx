@@ -2,17 +2,16 @@ import {
   DarkTheme,
   DefaultTheme,
   ThemeProvider,
-  useNavigation,
 } from '@react-navigation/native';
+import { router, Stack } from 'expo-router';
 import { useFonts } from 'expo-font';
-import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
 import 'react-native-reanimated';
-
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { getToken } from '@/utils';
+import { UserProvider } from '@/contexts/UserContext';
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
@@ -24,14 +23,14 @@ export default function RootLayout() {
     Lato: require('../assets/fonts/Lato-Regular.ttf'),
     LatoBold: require('../assets/fonts/Lato-Bold.ttf'),
   });
-  const navigation = useNavigation<any>(); // eslint-disable-line
 
   useEffect(() => {
+    if (!loaded) return;
+
     getToken().then((token) => {
-      if (token) return;
-      navigation.navigate('login');
+      if (!token) router.replace('/login');
     });
-  }, []);
+  }, [loaded]);
 
   useEffect(() => {
     if (loaded) {
@@ -44,14 +43,18 @@ export default function RootLayout() {
   }
 
   return (
-    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <Stack>
-        <Stack.Screen name="register" options={{ headerShown: false }} />
-        <Stack.Screen name="login" options={{ headerShown: false }} />
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="+not-found" />
-      </Stack>
-      <StatusBar style="auto" />
-    </ThemeProvider>
+    <UserProvider>
+      <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+        <Stack>
+          <Stack.Screen name="register" options={{ headerShown: false }} />
+          <Stack.Screen name="login" options={{ headerShown: false }} />
+          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+          <Stack.Screen name="+not-found" />
+          <Stack.Screen name="edit-profile" options={{ title: 'Editar Perfil' }} />
+          <Stack.Screen name="post/[id]" options={{ title: 'Publicação' }}/>
+        </Stack>
+        <StatusBar style="auto" />
+      </ThemeProvider>
+    </UserProvider>
   );
 }

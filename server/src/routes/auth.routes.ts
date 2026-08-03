@@ -2,6 +2,7 @@ import { Router } from 'express';
 import * as userRepository from '../repositories/user.repository';
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcrypt';
+import { isValidUsername } from '../utils/username';
 
 const JWT_SECRET = process.env.JWT_SECRET ?? '';
 
@@ -9,16 +10,27 @@ const router = Router();
 
 const SALT_ROUNDS = 10;
 
-type DatabaseError = { constraint: string };
+type DatabaseError = { constraint?: string };
 
 // Register User
 router.post('/register', async (req, res) => {
-  const { email, password, password2, username } = req.body;
+  const { email, password, password2, username, name } = req.body;
+
+  if (!email?.trim() || !username?.trim() || !name?.trim() || !password || !password2) {
+    res.status(400).json({ message: 'All fields are required' });
+    return;
+  }
 
   if (password !== password2) {
     res.status(400).json({ message: 'Passwords must match' });
     return;
   }
+  
+  if (!isValidUsername(username.trim())) {
+    res.status(400).json({ message: 'Nome de usuário deve ter de 3 a 20 caracteres, apenas letras minúsculas, números, "_" e "."' });
+    return;
+  };
+  
 
   const hashedPassword = await bcrypt.hash(password, SALT_ROUNDS);
 
@@ -27,6 +39,7 @@ router.post('/register', async (req, res) => {
       email,
       password: hashedPassword,
       username,
+      name
     });
 
     const token = jwt.sign({ id: user.id }, JWT_SECRET);
@@ -37,17 +50,17 @@ router.post('/register', async (req, res) => {
       token,
     });
   } catch (err) {
-    const isUniqueConstraint = !!(err as DatabaseError).constraint.includes(
+    const isUniqueConstraint = !!(err as DatabaseError).constraint?.includes(
       'unique',
     );
 
     if (isUniqueConstraint) {
-      res.status(400).json({ message: 'Username/email already exists 😢❌' });
+      res.status(400).json({ message: 'Nome de usuário ou e-mail já cadastrado' });
       return;
     }
 
     console.error(err);
-    res.status(500).json({ message: 'Something went wrong 😢❌' });
+    res.status(500).json({ message: 'Algo deu errado' });
   }
 });
 

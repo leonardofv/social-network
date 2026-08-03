@@ -75,7 +75,7 @@ export function TextField({
 
 // remove o outline azul padrão do navegador (a borda do wrapper já indica o foco)
 const webNoOutline: TextStyle | undefined =
-  Platform.OS === 'web' ? ({ outlineStyle: 'none' } as TextStyle) : undefined;
+  Platform.OS === 'web' ? { outlineWidth: 0 } : undefined;
 
 const styles = StyleSheet.create({
   container: {

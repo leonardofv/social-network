@@ -2,8 +2,6 @@ import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import {
-  KeyboardAvoidingView,
-  Platform,
   ScrollView,
   StyleSheet,
   Text,
@@ -13,19 +11,28 @@ import { PrimaryButton } from '@/components/ui/PrimaryButton';
 import { TextField } from '@/components/ui/TextField';
 import { Brand } from '@/constants/Colors';
 import { AuthService } from '@/services/auth.service';
+import { useKeyboardHeight } from '@/hooks/useKeyboardHeight';
 
 export default function RegisterScreen() {
   const router = useRouter();
-
+  
   const [username, setUsername] = useState('');
+  const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [password2, setPassword2] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const keyboardHeight = useKeyboardHeight();
 
   const registerUser = async () => {
-    if (!username.trim() || !email.trim() || !password || !password2) {
+    if (
+      !name.trim() ||
+      !username.trim() ||
+      !email.trim() ||
+      !password ||
+      !password2
+    ) {
       setError('Preencha todos os campos.');
       return;
     }
@@ -40,6 +47,7 @@ export default function RegisterScreen() {
     try {
       await AuthService.register({
         email: email.trim(),
+        name: name.trim(),
         password,
         password2,
         username: username.trim(),
@@ -55,10 +63,7 @@ export default function RegisterScreen() {
   };
 
   return (
-    <KeyboardAvoidingView
-      style={styles.flex}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-    >
+    <View style={styles.flex}>
       <ScrollView
         style={styles.flex}
         contentContainerStyle={styles.container}
@@ -76,6 +81,14 @@ export default function RegisterScreen() {
           <View style={styles.card}>
             <Text style={styles.title}>Crie sua conta</Text>
 
+            <TextField
+              label="Nome"
+              icon="person-outline"
+              value={name}
+              onChangeText={setName}
+              autoCapitalize="words"
+              returnKeyType="next"
+            />
             <TextField
               label="Nome de usuário"
               icon="person-outline"
@@ -131,7 +144,8 @@ export default function RegisterScreen() {
           </View>
         </View>
       </ScrollView>
-    </KeyboardAvoidingView>
+      <View style={{ height: keyboardHeight }} />
+    </View>
   );
 }
 

@@ -1,0 +1,53 @@
+import { apiData, apiFetch, imageFormData } from '@/services/api';
+
+export type Post = {
+  id: number;
+  path: string;
+  description?: string;
+  publishDate: string;
+  userId: number;
+};
+
+export type PostWithAuthor = Post & {
+  authorUsername: string;
+  authorName: string;
+  authorProfilePicture: string | null;
+}
+
+export class PostService {
+  static getMyPosts(): Promise<Post[]> {
+    return apiData<Post[]>('/posts');
+  }
+
+  static getById(id: number): Promise<PostWithAuthor> {
+    return apiData<PostWithAuthor>(`/posts/${id}`);
+  }
+
+  static async createPost(uri: string, description?: string): Promise<Post> {
+    const formData = await imageFormData('image', uri, 'post.jpg');
+    if (description) formData.append('description', description);
+
+    return apiData<Post>('/posts', {
+      method: 'POST',
+      body: formData,
+      errors: {
+        400: 'Envie uma imagem válida.',
+        413: 'A imagem deve ter no máximo 5MB.',
+      },
+    });
+  }
+
+  static remove(postId: number): Promise<void> {
+    return apiFetch(`/posts/${postId}`, {
+      method: 'DELETE',
+      errors: {
+        403: 'Você só pode excluir seus próprios posts',
+        404: 'Esse post não existe mais',
+      }
+    });
+  }
+
+  static getFeed(): Promise<PostWithAuthor[]> {
+    return apiData<PostWithAuthor[]>('/posts/feed');
+  }
+}

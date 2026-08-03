@@ -10,7 +10,7 @@ export async function up(knex: Knex): Promise<void> {
         .inTable('users')
         .primary()
         .onDelete('CASCADE');
-      table.string('name');
+      table.string('name').notNullable();
       table.string('profile_picture');
       table.string('bio');
     });
