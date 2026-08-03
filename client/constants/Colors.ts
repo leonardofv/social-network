@@ -15,6 +15,7 @@ export const Brand = {
   textMuted: '#5B6B82',
   border: '#D6DEEA',
   error: '#E0433B',
+  errorDark: '#B5322B',   // vermelho fechado — pressed de ações destrutivas
 };
 
 export const Colors = {

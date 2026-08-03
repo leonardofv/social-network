@@ -3,7 +3,6 @@ import { Brand } from '@/constants/Colors';
 import { useSessionGuard } from '@/hooks/useSessionGuard';
 import { mediaUrl } from '@/services/api';
 import { PostService, PostWithAuthor } from '@/services/post.service';
-import { useCurrentUser } from '@/contexts/UserContext';
 import { Image } from 'expo-image';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useState } from 'react';
@@ -23,7 +22,6 @@ export default function HomeScreen() {
 
   const router = useRouter();
   const handleSessionExpired = useSessionGuard();
-  const { logout } = useCurrentUser();
 
   const loadFeed = useCallback(async () => {
     setLoading(true);
@@ -45,11 +43,6 @@ export default function HomeScreen() {
       loadFeed();
     }, [loadFeed]),
   );
-
-  const onLogout = async () => {
-    await logout();
-    router.replace('/login');
-  };
 
   return (
     <FlatList
@@ -77,11 +70,6 @@ export default function HomeScreen() {
           </Pressable>
         </View>
       )}
-      ListHeaderComponent={
-        <Pressable onPress={onLogout} style={styles.logout}>
-          <Text style={styles.logoutText}>Sair</Text>
-        </Pressable>
-      }
       ListEmptyComponent={
         loading ? (
           <ActivityIndicator color={Brand.primary} style={styles.loading} />
@@ -102,6 +90,7 @@ const styles = StyleSheet.create({
   },
   content: {
     paddingBottom: 24,
+    paddingTop: 10,
   },
   image: {
     width: '100%',
@@ -140,15 +129,6 @@ const styles = StyleSheet.create({
     marginTop: 24,
   },
   messageError: {
-    color: Brand.error,
-  },
-  logout: {
-    alignSelf: 'flex-end',
-    padding: 12,
-  },
-  logoutText: {
-    fontFamily: 'Lato',
-    fontSize: 14,
     color: Brand.error,
   },
 });

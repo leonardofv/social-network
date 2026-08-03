@@ -44,14 +44,15 @@ export default function ProfileScreen() {
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState('');
   const [postsError, setPostsError] = useState('');
-  const { user, refresh } = useCurrentUser();
+  const { user, refresh, logout } = useCurrentUser();
 
   const router = useRouter();
   const handleSessionExpired = useSessionGuard();
 
   const { width: windowWidth } = useWindowDimensions();
   const contentWidth = Math.min(windowWidth, MAX_CONTENT_WIDTH);
-  const gridItemSize = (contentWidth - GRID_GAP * (GRID_COLUMNS - 1)) / GRID_COLUMNS;
+  const gridItemSize =
+    (contentWidth - GRID_GAP * (GRID_COLUMNS - 1)) / GRID_COLUMNS;
 
   const loadProfile = useCallback(async () => {
     try {
@@ -59,7 +60,9 @@ export default function ProfileScreen() {
       setError('');
     } catch (err) {
       if (await handleSessionExpired(err)) return;
-      setError(err instanceof Error ? err.message : 'Não foi possível conectar');
+      setError(
+        err instanceof Error ? err.message : 'Não foi possível conectar',
+      );
     } finally {
       setLoading(false);
     }
@@ -161,10 +164,16 @@ export default function ProfileScreen() {
     if (window.confirm('Remover a foto de perfil?')) removePicture();
   };
 
+  const onLogout = async () => {
+    await logout();
+    router.replace('/login');
+  };
+
   return (
     <FlatList
       style={styles.container}
       contentContainerStyle={styles.content}
+      ListHeaderComponentStyle={styles.fullWidth}
       data={posts}
       keyExtractor={(item) => item.id.toString()}
       numColumns={GRID_COLUMNS}
@@ -225,6 +234,17 @@ export default function ProfileScreen() {
               </View>
               <Text style={styles.email}>{user.username}</Text>
             </View>
+            <Pressable
+              onPress={onLogout}
+              accessibilityRole="button"
+              style={({ pressed }) => [
+                styles.logout,
+                pressed && styles.logoutPressed,
+              ]}
+            >
+              <Ionicons name="log-out-outline" size={16} color="#fff" />
+              <Text style={styles.logoutText}>Sair</Text>
+            </Pressable>
           </View>
 
           {user.bio && <Text style={styles.bio}>{user.bio}</Text>}
@@ -278,7 +298,7 @@ const styles = StyleSheet.create({
   },
   listMessage: {
     marginTop: 24,
-    alignSelf: 'stretch'
+    alignSelf: 'stretch',
   },
   container: {
     flex: 1,
@@ -293,10 +313,13 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     paddingHorizontal: HEADER_GUTTER,
   },
+  fullWidth: {
+    width: '100%',
+  },
   avatarRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8
+    gap: 8,
   },
   avatarColumn: {
     alignItems: 'center',
@@ -384,5 +407,23 @@ const styles = StyleSheet.create({
   },
   gridSeparator: {
     height: GRID_GAP,
+  },
+  logout: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginLeft: 'auto',
+    gap: 6,
+    paddingVertical: 8,
+    paddingHorizontal: 14,
+    borderRadius: 999,
+    backgroundColor: Brand.error,
+  },
+  logoutPressed: {
+    backgroundColor: Brand.errorDark,
+  },
+  logoutText: {
+    fontFamily: 'LatoBold',
+    fontSize: 14,
+    color: '#fff',
   },
 });
