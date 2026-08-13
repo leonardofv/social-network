@@ -15,6 +15,7 @@ import {
   StyleSheet,
   Text,
   View,
+  Modal,
 } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { Ionicons } from '@expo/vector-icons';
@@ -45,6 +46,7 @@ export default function ProfileScreen() {
   const [error, setError] = useState('');
   const [postsError, setPostsError] = useState('');
   const { user, refresh, logout } = useCurrentUser();
+  const [menuVisible, setMenuVisible] = useState(false);
 
   const router = useRouter();
   const handleSessionExpired = useSessionGuard();
@@ -148,7 +150,6 @@ export default function ProfileScreen() {
   };
 
   const onAvatarPress = () => {
-    //remoção no link abaixo.
     if (!avatarUri || IS_WEB) {
       pickImage();
       return;
@@ -170,113 +171,142 @@ export default function ProfileScreen() {
   };
 
   return (
-    <FlatList
-      style={styles.container}
-      contentContainerStyle={styles.content}
-      ListHeaderComponentStyle={styles.fullWidth}
-      data={posts}
-      keyExtractor={(item) => item.id.toString()}
-      numColumns={GRID_COLUMNS}
-      columnWrapperStyle={styles.gridRow}
-      ItemSeparatorComponent={() => <View style={styles.gridSeparator} />}
-      renderItem={({ item }) => (
-        <Pressable onPress={() => router.push(`/post/${item.id}`)}>
-          <Image
-            source={{ uri: mediaUrl(item.path) }}
-            style={{ width: gridItemSize, height: gridItemSize }}
-            contentFit="cover"
-            cachePolicy="memory-disk"
-          />
-        </Pressable>
-      )}
-      ListHeaderComponent={
-        <View style={styles.header}>
-          <View style={styles.avatarRow}>
-            <View style={styles.avatarColumn}>
-              <Pressable onPress={onAvatarPress} disabled={uploading}>
-                {avatarUri ? (
-                  <Image
-                    source={{ uri: avatarUri }}
-                    style={styles.avatar}
-                    contentFit="cover"
-                    cachePolicy="memory-disk"
-                    transition={200}
-                  />
-                ) : (
-                  <View style={[styles.avatar, styles.avatarPlaceholder]}>
-                    <Text style={styles.avatarInitial}>{user.name[0]}</Text>
-                  </View>
-                )}
-                <View style={styles.cameraBadge}>
-                  {uploading ? (
-                    <ActivityIndicator size="small" color="#fff" />
+    <>
+      <FlatList
+        style={styles.container}
+        contentContainerStyle={styles.content}
+        ListHeaderComponentStyle={styles.fullWidth}
+        data={posts}
+        keyExtractor={(item) => item.id.toString()}
+        numColumns={GRID_COLUMNS}
+        columnWrapperStyle={styles.gridRow}
+        ItemSeparatorComponent={() => <View style={styles.gridSeparator} />}
+        renderItem={({ item }) => (
+          <Pressable onPress={() => router.push(`/post/${item.id}`)}>
+            <Image
+              source={{ uri: mediaUrl(item.path) }}
+              style={{ width: gridItemSize, height: gridItemSize }}
+              contentFit="cover"
+              cachePolicy="memory-disk"
+            />
+          </Pressable>
+        )}
+        ListHeaderComponent={
+          <View style={styles.header}>
+            <View style={styles.avatarRow}>
+              <View style={styles.avatarColumn}>
+                <Pressable onPress={onAvatarPress} disabled={uploading}>
+                  {avatarUri ? (
+                    <Image
+                      source={{ uri: avatarUri }}
+                      style={styles.avatar}
+                      contentFit="cover"
+                      cachePolicy="memory-disk"
+                      transition={200}
+                    />
                   ) : (
-                    <Ionicons name="camera" size={11} color="#fff" />
+                    <View style={[styles.avatar, styles.avatarPlaceholder]}>
+                      <Text style={styles.avatarInitial}>{user.name[0]}</Text>
+                    </View>
                   )}
-                </View>
-              </Pressable>
-              {IS_WEB && avatarUri && (
-                <Pressable onPress={onRemovePress} disabled={uploading}>
-                  <Text style={styles.removePhoto}>Remover foto</Text>
+                  <View style={styles.cameraBadge}>
+                    {uploading ? (
+                      <ActivityIndicator size="small" color="#fff" />
+                    ) : (
+                      <Ionicons name="camera" size={11} color="#fff" />
+                    )}
+                  </View>
                 </Pressable>
-              )}
+                {IS_WEB && avatarUri && (
+                  <Pressable onPress={onRemovePress} disabled={uploading}>
+                    <Text style={styles.removePhoto}>Remover foto</Text>
+                  </Pressable>
+                )}
+              </View>
+
+              <View style={styles.headerInfo}>
+                <Text style={styles.name}>{user.name}</Text>
+                <Text style={styles.username}>{user.username}</Text>
+              </View>
+              <Pressable
+                onPress={() => setMenuVisible(true)}
+                hitSlop={8}
+                accessibilityRole="button"
+                style={styles.menuButton}
+              >
+                <Ionicons name="menu" size={24} color={Brand.text} />
+              </Pressable>
             </View>
 
-            <View style={styles.headerInfo}>
-              <View style={styles.nameRow}>
-                <Text style={styles.name}>{user.name}</Text>
-                <Pressable
-                  onPress={() => router.push('/edit-profile')}
-                  hitSlop={8}
-                >
-                  <Ionicons name="pencil" size={16} color={Brand.textMuted} />
-                </Pressable>
-              </View>
-              <Text style={styles.email}>{user.username}</Text>
-            </View>
+            {user.bio && <Text style={styles.bio}>{user.bio}</Text>}
             <Pressable
-              onPress={onLogout}
+              onPress={() => router.push('/create-post')}
               accessibilityRole="button"
               style={({ pressed }) => [
-                styles.logout,
-                pressed && styles.logoutPressed,
+                styles.newPostButton,
+                pressed && styles.newPostButtonPressed,
               ]}
             >
-              <Ionicons name="log-out-outline" size={16} color="#fff" />
-              <Text style={styles.logoutText}>Sair</Text>
+              <Ionicons name="add" size={18} color="#fff" />
+              <Text style={styles.newPostLabel}>Novo post</Text>
             </Pressable>
           </View>
-
-          {user.bio && <Text style={styles.bio}>{user.bio}</Text>}
-          <Pressable
-            onPress={() => router.push('/create-post')}
-            accessibilityRole="button"
-            style={({ pressed }) => [
-              styles.newPostButton,
-              pressed && styles.newPostButtonPressed,
-            ]}
-          >
-            <Ionicons name="add" size={18} color="#fff" />
-            <Text style={styles.newPostLabel}>Novo post</Text>
-          </Pressable>
-        </View>
-      }
-      ListEmptyComponent={
-        postsLoading ? (
-          <ActivityIndicator color={Brand.primary} />
-        ) : (
-          <Text
-            style={[
-              styles.message,
-              styles.listMessage,
-              postsError ? styles.messageError : null,
-            ]}
-          >
-            {postsError || 'Nenhuma publicação ainda'}
-          </Text>
-        )
-      }
-    />
+        }
+        ListEmptyComponent={
+          postsLoading ? (
+            <ActivityIndicator color={Brand.primary} />
+          ) : (
+            <Text
+              style={[
+                styles.message,
+                styles.listMessage,
+                postsError ? styles.messageError : null,
+              ]}
+            >
+              {postsError || 'Nenhuma publicação ainda'}
+            </Text>
+          )
+        }
+      />
+      <Modal
+        visible={menuVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setMenuVisible(false)}
+      >
+        <Pressable
+          style={styles.menuOverlay}
+          onPress={() => setMenuVisible(false)}
+        >
+          <View style={styles.menuColumn}>
+            <View style={styles.menu}>
+              <Pressable
+                style={styles.menuItem}
+                onPress={() => {
+                  setMenuVisible(false);
+                  router.push('/edit-profile');
+                }}
+              >
+                <Ionicons name="pencil" size={16} color={Brand.text} />
+                <Text style={styles.menuItemText}>Editar Perfil</Text>
+              </Pressable>
+              <Pressable
+                style={styles.menuItem}
+                onPress={() => {
+                  setMenuVisible(false);
+                  onLogout();
+                }}
+              >
+                <Ionicons name="log-out" size={16} color={Brand.error} />
+                <Text style={[styles.menuItemText, styles.menuItemDanger]}>
+                  Sair
+                </Text>
+              </Pressable>
+            </View>
+          </View>
+        </Pressable>
+      </Modal>
+    </>
   );
 }
 
@@ -305,7 +335,7 @@ const styles = StyleSheet.create({
     backgroundColor: Brand.background,
   },
   content: {
-    alignItems: 'flex-start',
+    alignItems: 'center',
     paddingVertical: HEADER_PADDING,
   },
   header: {
@@ -315,6 +345,8 @@ const styles = StyleSheet.create({
   },
   fullWidth: {
     width: '100%',
+    maxWidth: MAX_CONTENT_WIDTH,
+    alignSelf: 'center',
   },
   avatarRow: {
     flexDirection: 'row',
@@ -362,17 +394,12 @@ const styles = StyleSheet.create({
   headerInfo: {
     gap: 4,
   },
-  nameRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-  },
   name: {
     fontFamily: 'LatoBold',
     fontSize: 16,
     color: Brand.text,
   },
-  email: {
+  username: {
     fontFamily: 'Lato',
     fontSize: 15,
     color: Brand.textMuted,
@@ -408,22 +435,44 @@ const styles = StyleSheet.create({
   gridSeparator: {
     height: GRID_GAP,
   },
-  logout: {
+  menuButton: {
+    marginLeft: 'auto',
+  },
+  menuOverlay: {
+    flex: 1,
+    alignItems: 'center',
+  },
+  menuColumn: {
+    width: '100%',
+    maxWidth: MAX_CONTENT_WIDTH,
+    alignItems: 'flex-end',
+  },
+  menu: {
+    marginTop: 60,
+    marginRight: 16,
+    backgroundColor: Brand.surface,
+    borderRadius: 12,
+    paddingVertical: 4,
+    minWidth: 180,
+    elevation: 4, // sombra no Android
+    shadowColor: '#000', // sombra no iOS/web
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 4 },
+  },
+  menuItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginLeft: 'auto',
-    gap: 6,
-    paddingVertical: 8,
-    paddingHorizontal: 14,
-    borderRadius: 999,
-    backgroundColor: Brand.error,
+    gap: 10,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
   },
-  logoutPressed: {
-    backgroundColor: Brand.errorDark,
+  menuItemText: {
+    fontFamily: 'Lato',
+    fontSize: 15,
+    color: Brand.text,
   },
-  logoutText: {
-    fontFamily: 'LatoBold',
-    fontSize: 14,
-    color: '#fff',
+  menuItemDanger: {
+    color: Brand.error,
   },
 });
