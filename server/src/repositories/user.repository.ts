@@ -22,6 +22,13 @@ export type UpdateProfileInput = {
   bio: string | null;
 };
 
+export type UserSummary = {
+  id: number;
+  username: string;
+  name: string;
+  profilePicture: string | null;
+};
+
 export const create = async ({
   email,
   password,
@@ -81,6 +88,18 @@ export const updateProfile = async (userId: number, { name, username, bio }: Upd
     await trx('users').where('id', userId).update('username', username);
     await trx('user_profile').where('user_id', userId).update({ name, bio });
   });
+};
+
+export const searchUsers = async (term: string): Promise<UserSummary[]> => {
+  return await db('users')
+    .leftJoin('user_profile', 'users.id', 'user_profile.user_id')
+    .column('users.id', 'users.username', {
+      name: 'user_profile.name',
+      profilePicture: 'user_profile.profile_picture',
+    })
+    .whereILike('users.username', `%${term}%`)
+    .orWhereILike('user_profile.name', `%${term}%`)
+    .limit(20);
 };
 
 

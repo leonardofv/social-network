@@ -13,14 +13,32 @@ router.get('/me', authMiddleware, async (req: AuthenticatedRequest, res) => {
         const user = await userRepository.findProfileById(req.userId!);
 
         if (!user) {
-            res.status(404).json({ message: 'User not found 😢❌' });
+            res.status(404).json({ message: 'usuário não encontrado' });
             return;
         }
 
         res.status(200).json({ message: 'OK ✅', data: user });
     } catch(error) {
         console.log(error);
-        res.status(500).json({ message: 'Something went wrong 😢❌' });
+        res.status(500).json({ message: 'Algo deu errado' });
+    }
+});
+
+router.get('/search', authMiddleware, async (req: AuthenticatedRequest, res) => {
+    try {
+        const term = String(req.query.q ?? '').trim();
+    
+        if (!term) {
+            res.status(200).json({ message: 'OK', data: [] });
+            return;
+        }
+
+        const users = await userRepository.searchUsers(term);
+        res.status(200).json({ message: 'OK', data: users });
+
+    } catch(error) {
+        console.log(error);
+        res.status(500).json({ message: 'Algo deu errado' });
     }
 });
 
