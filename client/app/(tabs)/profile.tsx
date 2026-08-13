@@ -150,7 +150,6 @@ export default function ProfileScreen() {
   };
 
   const onAvatarPress = () => {
-    //remoção no link abaixo.
     if (!avatarUri || IS_WEB) {
       pickImage();
       return;
@@ -279,29 +278,31 @@ export default function ProfileScreen() {
           style={styles.menuOverlay}
           onPress={() => setMenuVisible(false)}
         >
-          <View style={styles.menu}>
-            <Pressable
-              style={styles.menuItem}
-              onPress={() => {
-                setMenuVisible(false);
-                router.push('/edit-profile');
-              }}
-            >
-              <Ionicons name="pencil" size={16} color={Brand.text} />
-              <Text style={styles.menuItemText}>Editar Perfil</Text>
-            </Pressable>
-            <Pressable
-              style={styles.menuItem}
-              onPress={() => {
-                setMenuVisible(false);
-                onLogout();
-              }}
-            >
-              <Ionicons name="log-out" size={16} color={Brand.error} />
-              <Text style={[styles.menuItemText, styles.menuItemDanger]}>
-                Sair
-              </Text>
-            </Pressable>
+          <View style={styles.menuColumn}>
+            <View style={styles.menu}>
+              <Pressable
+                style={styles.menuItem}
+                onPress={() => {
+                  setMenuVisible(false);
+                  router.push('/edit-profile');
+                }}
+              >
+                <Ionicons name="pencil" size={16} color={Brand.text} />
+                <Text style={styles.menuItemText}>Editar Perfil</Text>
+              </Pressable>
+              <Pressable
+                style={styles.menuItem}
+                onPress={() => {
+                  setMenuVisible(false);
+                  onLogout();
+                }}
+              >
+                <Ionicons name="log-out" size={16} color={Brand.error} />
+                <Text style={[styles.menuItemText, styles.menuItemDanger]}>
+                  Sair
+                </Text>
+              </Pressable>
+            </View>
           </View>
         </Pressable>
       </Modal>
@@ -334,7 +335,7 @@ const styles = StyleSheet.create({
     backgroundColor: Brand.background,
   },
   content: {
-    alignItems: 'flex-start',
+    alignItems: 'center',
     paddingVertical: HEADER_PADDING,
   },
   header: {
@@ -344,6 +345,8 @@ const styles = StyleSheet.create({
   },
   fullWidth: {
     width: '100%',
+    maxWidth: MAX_CONTENT_WIDTH,
+    alignSelf: 'center',
   },
   avatarRow: {
     flexDirection: 'row',
@@ -391,22 +394,12 @@ const styles = StyleSheet.create({
   headerInfo: {
     gap: 4,
   },
-  nameRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-  },
   name: {
     fontFamily: 'LatoBold',
     fontSize: 16,
     color: Brand.text,
   },
   username: {
-    fontFamily: 'Lato',
-    fontSize: 15,
-    color: Brand.textMuted,
-  },
-  email: {
     fontFamily: 'Lato',
     fontSize: 15,
     color: Brand.textMuted,
@@ -447,12 +440,17 @@ const styles = StyleSheet.create({
   },
   menuOverlay: {
     flex: 1,
+    alignItems: 'center',
+  },
+  menuColumn: {
+    width: '100%',
+    maxWidth: MAX_CONTENT_WIDTH,
     alignItems: 'flex-end',
   },
   menu: {
     marginTop: 60,
     marginRight: 16,
-    backgroundColor: Brand.background,
+    backgroundColor: Brand.surface,
     borderRadius: 12,
     paddingVertical: 4,
     minWidth: 180,
