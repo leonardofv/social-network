@@ -15,6 +15,13 @@ export type UserProfileInput = {
   bio: string | null;
 };
 
+export type UserSummary = {
+  id: number;
+  username: string;
+  name: string;
+  profilePicture: string | null;
+};
+
 export class UserService {
   static getMe(): Promise<UserProfile> {
     return apiData<UserProfile>('/users/me');
@@ -43,5 +50,9 @@ export class UserService {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),
     });
+  }
+
+  static searchUsers(query: string): Promise<UserSummary[]> {
+    return apiData<UserSummary[]>(`/users/search?q=${encodeURIComponent(query)}`);
   }
 }
