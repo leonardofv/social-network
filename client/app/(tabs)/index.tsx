@@ -1,89 +1,134 @@
-import { clearToken, getToken } from '@/utils';
-import { useNavigation } from '@react-navigation/native';
-import { useEffect, useRef, useState } from 'react';
-import { StyleSheet, View, Text, Button, FlatList } from 'react-native';
-
-interface Post {
-  id: number;
-  userId: number;
-  path: string;
-  publishDate: string;
-  description: string;
-}
+import { UserAvatar } from '@/components/ui/UserAvatar';
+import { Brand } from '@/constants/Colors';
+import { useSessionGuard } from '@/hooks/useSessionGuard';
+import { mediaUrl } from '@/services/api';
+import { PostService, PostWithAuthor } from '@/services/post.service';
+import { Image } from 'expo-image';
+import { useFocusEffect, useRouter } from 'expo-router';
+import { useCallback, useState } from 'react';
+import {
+  ActivityIndicator,
+  FlatList,
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
 
 export default function HomeScreen() {
-  const [posts, setPosts] = useState<Post[]>([]);
-  const navigation = useNavigation<any>(); // eslint-disable-line
+  const [posts, setPosts] = useState<PostWithAuthor[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
-  const counterRef = useRef<NodeJS.Timeout>();
+  const router = useRouter();
+  const handleSessionExpired = useSessionGuard();
 
-  useEffect(() => {
-    const fetchPosts = async (token: string) => {
-      try {
-        const URL = process.env.EXPO_PUBLIC_API_URL;
-        const response = await fetch(`${URL}/posts`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
-        const data = await response.json();
-        console.log('Fetched posts:', data); //post no console
-        setPosts(data);
-      } catch (error) {
-        console.error('Error fetching posts:', error);
-      }
-    };
+  const loadFeed = useCallback(async () => {
+    setLoading(true);
+    try {
+      setPosts(await PostService.getFeed());
+      setError('');
+    } catch (error) {
+      if (await handleSessionExpired(error)) return;
+      setError(
+        error instanceof Error ? error.message : 'Não foi possível conectar',
+      );
+    } finally {
+      setLoading(false);
+    }
+  }, [handleSessionExpired]);
 
-    getToken().then((token) => {
-      if (token) {
-        fetchPosts(token);
-      }
-    });
-
-    return () => clearInterval(counterRef.current);
-  }, []);
+  useFocusEffect(
+    useCallback(() => {
+      loadFeed();
+    }, [loadFeed]),
+  );
 
   return (
-    <View style={styles.container}>
-      <FlatList
-        data={posts}
-        keyExtractor={(item) => item.id.toString()}
-        renderItem={({ item }) => (
-          <View style={styles.post}>
-            <Text style={styles.postTitle}>ID: {item.id}</Text>
-            <Text>User ID: {item.userId}</Text>
-            <Text>Path: {item.path}</Text>
-            <Text>Publish Date: {item.publishDate}</Text>
-            <Text>Description: {item.description}</Text>
+    <FlatList
+      style={styles.container}
+      contentContainerStyle={styles.content}
+      data={posts}
+      keyExtractor={(item) => item.id.toString()}
+      ItemSeparatorComponent={() => <View style={styles.separator} />}
+      renderItem={({ item }) => (
+        <View>
+          <View style={styles.authorRow}>
+            <UserAvatar name={item.authorName} picture={item.authorProfilePicture}/>
+            <Text style={styles.authorName}>{item.authorName}</Text>
           </View>
-        )}
-      />
-      <Button
-        title="Logout"
-        onPress={() => {
-          clearToken();
-          navigation.replace('login');
-        }}
-      />
-    </View>
+          <Pressable onPress={() => router.push(`/post/${item.id}`)}>
+            <Image
+              source={{ uri: mediaUrl(item.path) }}
+              style={styles.image}
+              contentFit="cover"
+              cachePolicy="memory-disk"
+            />
+            {item.description ? (
+              <Text style={styles.description}>{item.description}</Text>
+            ) : null}
+          </Pressable>
+        </View>
+      )}
+      ListEmptyComponent={
+        loading ? (
+          <ActivityIndicator color={Brand.primary} style={styles.loading} />
+        ) : (
+          <Text style={[styles.message, error ? styles.messageError : null]}>
+            {error || 'Nenhuma publicação ainda'}
+          </Text>
+        )
+      }
+    />
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    padding: 20,
-    display: 'flex',
-    justifyContent: 'center',
-    alignItems: 'center',
     flex: 1,
+    backgroundColor: Brand.background,
   },
-  post: {
-    backgroundColor: 'white',
-    padding: 10,
-    marginVertical: 5,
-    borderRadius: 5,
+  content: {
+    paddingBottom: 24,
+    paddingTop: 10,
   },
-  postTitle: {
-    fontWeight: 'bold',
+  image: {
+    width: '100%',
+    aspectRatio: 1,
+  },
+  description: {
+    fontFamily: 'Lato',
+    fontSize: 15,
+    color: Brand.text,
+    padding: 12,
+  },
+  separator: {
+    height: 16,
+  },
+  authorRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingHorizontal: 12,
+    paddingBottom: 8,
+  },
+  authorName: {
+    fontFamily: 'LatoBold',
+    fontSize: 14,
+    color: Brand.text,
+  },
+
+  loading: {
+    marginTop: 24,
+  },
+  message: {
+    fontFamily: 'Lato',
+    fontSize: 14,
+    color: Brand.textMuted,
+    textAlign: 'center',
+    marginTop: 24,
+  },
+  messageError: {
+    color: Brand.error,
   },
 });

@@ -1,130 +1,176 @@
+import { Ionicons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
+import { useState } from 'react';
+import {
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
+import { PrimaryButton } from '@/components/ui/PrimaryButton';
+import { TextField } from '@/components/ui/TextField';
+import { Brand } from '@/constants/Colors';
 import { AuthService } from '@/services/auth.service';
 import { storeToken } from '@/utils';
-import { useNavigation } from '@react-navigation/native';
-import { useState } from 'react';
-import { View, Text, StyleSheet, Button, Image } from 'react-native';
-import styled from 'styled-components/native';
-
-const StyledText = styled.Text`
-  font-family: 'Lato';
-`;
-
-const Input = styled.TextInput`
-  border-color: #dcdcdc;
-  border-width: 1px;
-  border-style: solid;
-  padding: 12px;
-  border-radius: 3px;
-  outline-color: rgb(255, 77, 109, 0.3);
-  font-family: 'Lato';
-`;
-
-const RegisterLink = styled(StyledText)`
-  color: #ff4d6d;
-  text-decoration-line: underline;
-`;
+import { useKeyboardHeight } from '@/hooks/useKeyboardHeight';
+import { useCurrentUser } from '@/contexts/UserContext';
 
 export default function LoginScreen() {
-  const navigation = useNavigation<any>(); // eslint-disable-line
+  const router = useRouter();
+  const keyboardHeight = useKeyboardHeight();
+  const { refresh } = useCurrentUser();
 
   const [emailOrUsername, setEmailOrUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
 
   const loginUser = async () => {
-    const data = await AuthService.login(emailOrUsername, password);
-    if (!data) return;
+    if (!emailOrUsername.trim() || !password) {
+      setError('Preencha todos os campos.');
+      return;
+    }
 
-    const { token } = data;
-    await storeToken(token);
-
-    navigation.navigate('(tabs)');
+    setError('');
+    setLoading(true);
+    try {
+      const { token } = await AuthService.login(
+        emailOrUsername.trim(),
+        password,
+      );
+      await storeToken(token);
+      await refresh();
+      router.replace('/(tabs)');
+    } catch (err) {
+      setError(
+        err instanceof Error ? err.message : 'Não foi possível conectar.',
+      );
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
-    <View style={styles.container}>
-      <View style={styles.titleContainer}>
-        <Image
-          style={styles.pinkBackground}
-          source={require('../assets/images/pink-background.jpg')}
-        />
-        <Text style={styles.title}>Login</Text>
-        <StyledText style={{ color: 'white' }}>
-          Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do
-          eiusmod tempor incididunt ut labore et dolore magna aliqua.
-        </StyledText>
-      </View>
-      <View style={styles.form}>
-        <View>
-          <StyledText>E-mail ou Nome de Usuário</StyledText>
-          <Input
-            style={styles.input}
-            defaultValue={emailOrUsername}
-            onChangeText={(newText: string) => setEmailOrUsername(newText)}
-          />
+    <View style={styles.flex}>
+      <ScrollView
+        style={styles.flex}
+        contentContainerStyle={styles.container}
+        keyboardShouldPersistTaps="handled"
+      >
+        <View style={styles.content}>
+          <View style={styles.logoContainer}>
+            <Ionicons name="chatbubbles" size={56} color={Brand.primary} />
+            <Text style={styles.logoText}>SocialNetwork</Text>
+            <Text style={styles.tagline}>
+              Compartilhe momentos com quem importa.
+            </Text>
+          </View>
+
+          <View style={styles.card}>
+            <Text style={styles.title}>Bem-vindo de volta!</Text>
+
+            <TextField
+              label="E-mail ou nome de usuário"
+              icon="mail-outline"
+              value={emailOrUsername}
+              onChangeText={setEmailOrUsername}
+              autoCapitalize="none"
+              inputMode="email"
+              returnKeyType="next"
+            />
+            <TextField
+              label="Senha"
+              icon="lock-closed-outline"
+              value={password}
+              onChangeText={setPassword}
+              secureTextEntry
+              returnKeyType="done"
+              onSubmitEditing={loginUser}
+            />
+
+            {error !== '' && <Text style={styles.error}>{error}</Text>}
+
+            <PrimaryButton title="Entrar" onPress={loginUser} loading={loading} />
+
+            <Text style={styles.footerText}>
+              Ainda não tem conta?{' '}
+              <Text
+                style={styles.registerLink}
+                onPress={() => router.push('/register')}
+              >
+                Registre-se aqui.
+              </Text>
+            </Text>
+          </View>
         </View>
-        <View>
-          <StyledText>Senha</StyledText>
-          <Input
-            style={styles.input}
-            defaultValue={password}
-            onChangeText={(newText: string) => setPassword(newText)}
-            secureTextEntry
-          />
-        </View>
-        <Button color="#ff4d6d" title="Login" onPress={loginUser} />
-        <StyledText>
-          Ainda não tem conta?{' '}
-          <RegisterLink
-            onPress={() => {
-              navigation.navigate('register');
-            }}
-          >
-            Registre-se aqui.
-          </RegisterLink>
-        </StyledText>
-      </View>
+      </ScrollView>
+      <View style={{ height: keyboardHeight }} />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  titleContainer: {
-    height: 300,
-    backgroundColor: 'rgba(0, 0, 0, .1)',
-    padding: 12,
-    justifyContent: 'flex-end',
-    position: 'relative',
-  },
-  title: {
-    fontWeight: 'bold',
-    fontSize: 24,
-    marginBottom: 4,
-    color: 'white',
+  flex: {
+    flex: 1,
+    backgroundColor: Brand.background,
   },
   container: {
-    backgroundColor: '#fff0f3',
-    flex: 1,
-  },
-  input: {
-    borderColor: '#dcdcdc',
-    borderWidth: 1,
-    borderStyle: 'solid',
-    padding: 12,
-    borderRadius: 3,
-  },
-  form: {
-    flex: 1,
-    marginTop: 24,
-    gap: 12,
+    flexGrow: 1,
     justifyContent: 'center',
-    padding: 12,
+    padding: 20,
   },
-  pinkBackground: {
+  content: {
     width: '100%',
-    height: '100%',
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    filter: 'brightness(0.8)',
+    maxWidth: 420,
+    alignSelf: 'center',
+    gap: 28,
+  },
+  logoContainer: {
+    alignItems: 'center',
+    gap: 4,
+  },
+  logoText: {
+    fontFamily: 'LatoBold',
+    fontSize: 28,
+    color: Brand.text,
+  },
+  tagline: {
+    fontFamily: 'Lato',
+    fontSize: 15,
+    color: Brand.textMuted,
+  },
+  card: {
+    backgroundColor: Brand.surface,
+    borderRadius: 20,
+    padding: 24,
+    gap: 16,
+    shadowColor: Brand.primary,
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.12,
+    shadowRadius: 24,
+    elevation: 4,
+  },
+  title: {
+    fontFamily: 'LatoBold',
+    fontSize: 20,
+    color: Brand.text,
+    marginBottom: 4,
+  },
+  error: {
+    fontFamily: 'Lato',
+    fontSize: 14,
+    color: Brand.error,
+    textAlign: 'center',
+  },
+  footerText: {
+    fontFamily: 'Lato',
+    fontSize: 14,
+    color: Brand.textMuted,
+    textAlign: 'center',
+  },
+  registerLink: {
+    fontFamily: 'LatoBold',
+    color: Brand.primary,
+    textDecorationLine: 'underline',
   },
 });

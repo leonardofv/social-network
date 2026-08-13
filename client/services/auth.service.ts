@@ -22,7 +22,7 @@ export class AuthService {
   static async login(
     emailOrUsername: string,
     password: string,
-  ): Promise<LoginUserPayload | undefined> {
+  ): Promise<LoginUserPayload> {
     const res = await fetch(`${API_URL}/auth/login`, {
       body: JSON.stringify({
         emailOrUsername,
@@ -34,35 +34,33 @@ export class AuthService {
       method: 'POST',
     });
 
-    const data = await res.json();
-
-    if (res.status === 400) {
-      alert(data.message);
-      return;
+    if (!res.ok) {
+      if (res.status === 400) {
+        const data = await res.json().catch(() => null);
+        throw new Error(data?.message ?? 'Dados inválidos.');
+      }
+      throw new Error('Algo deu errado. Tente novamente.');
     }
-
-    if (res.status === 500) {
-      alert('Something went wrong!');
-      return;
-    }
-
-    return data;
+    return res.json();
   }
 
   static async register({
     email,
+    name,
     password,
     password2,
     username,
   }: {
     email: string;
+    name: string;
     password: string;
     password2: string;
     username?: string;
-  }): Promise<RegisterUserPayload | undefined> {
-    const res = await fetch('http://localhost:3000/auth/register', {
+  }): Promise<RegisterUserPayload> {
+    const res = await fetch(`${API_URL}/auth/register`, {
       body: JSON.stringify({
         email,
+        name,
         password,
         password2,
         username,
@@ -73,18 +71,14 @@ export class AuthService {
       method: 'POST',
     });
 
-    const data = await res.json();
-
-    if (res.status === 400) {
-      alert(data.message);
-      return;
+    if (!res.ok) {
+      if (res.status === 400) {
+        const data = await res.json().catch(() => null);
+        throw new Error(data?.message ?? 'Dados inválidos.');
+      }
+      throw new Error('Algo deu errado. Tente novamente.');
     }
 
-    if (res.status === 500) {
-      alert('Something went wrong!');
-      return;
-    }
-
-    return data;
+    return res.json();
   }
 }
