@@ -1,39 +1,76 @@
 # Social Network
 
-Projeto Web Full-Stack para adquirir/aprimorar habilidades em Desenvolvimento Web, utilizando tecnologias como JavaScript, React, entre outros.
+Projeto Web Full-Stack para adquirir/aprimorar habilidades em Desenvolvimento Web, utilizando tecnologias como TypeScript, ReactNative, entre outros.
 
 ## Sobre o projeto
 
 Será uma rede social, parecida com o Instagram/Twitter, onde usuários cadastrados conseguem publicar textos e mídias e usuários que o seguem conseguem visualizá-los.
 
-## Rodando
+## Como usar
 
-Para executar o client e servidor em ambiente de desenvolvimento:
+### Pré-requisitos
+
+- [Node.js](https://nodejs.org/) (v20+)
+- [PostgreSQL](https://www.postgresql.org/) rodando localmente
+
+### 1. Instalar as dependências
+
+O repositório tem três `package.json` (raiz, client e server):
+
+```bash
+npm install
+cd client && npm install
+cd ../server && npm install
+```
+
+### 2. Configurar as variáveis de ambiente
+
+**Servidor** — crie `server/.env` (use `server/.env.example` como base):
+
+```env
+DATABASE_URL="postgresql://usuario:senha@localhost:5432/redesocial"
+JWT_SECRET="uma-senha-qualquer"
+```
+
+Crie também o banco no PostgreSQL.
+
+**Cliente** — crie `client/.env`:
+
+```env
+EXPO_PUBLIC_API_URL="http://localhost:3000"
+```
+
+### 3. Rodar as migrations
+
+```bash
+cd server && npm run migrate:latest
+```
+
+### 4. Rodar em desenvolvimento
+
+Na raiz do projeto:
 
 ```bash
 npm run dev
 ```
 
-O servidor rodará na porta 3000 enquanto Expo rodará em sua porta padrão (8081).
-
-> Se quiser rodar no seu dispositivo móvel também, recomendo rodar `npx expo start` direto no diretório do cliente, já que ele apresentará o QR Code para que consiga acessá-lo. Rodando com esse comando ele irá disponibilizar somente na Web.
-
 ## Tech Stack 💻
 
 ### Front-end
 
-- HTML5
-- CSS3
-- [React.js](https://react.dev/)
-- [React Native](https://reactnative.dev/)
-- [Expo](https://expo.dev/)
+- [React](https://react.dev/) + [React Native](https://reactnative.dev/)
+- [TypeScript](https://www.typescriptlang.org/)
+- [Expo](https://expo.dev/) + [Expo Router](https://docs.expo.dev/router/introduction/) (roteamento por arquivos)
 
 ### Back-end
 
-- [Bun.js](https://bun.sh/) (JavaScript Runtime, like Node.js but better)
+- [TypeScript](https://www.typescriptlang.org/) (Node.js + ts-node)
 - [Express.js](https://expressjs.com/)
 - [PostgreSQL](https://www.postgresql.org/) (Banco de Dados SQL)
-- [Knex.js](https://knexjs.org/) (Query Builder)
+- [Knex.js](https://knexjs.org/) (Query Builder e migrations)
+- [JWT](https://github.com/auth0/node-jsonwebtoken) (autenticação)
+- [bcrypt](https://github.com/kelektiv/node.bcrypt.js) (hash de senhas)
+- [Multer](https://github.com/expressjs/multer) (upload de imagens)
 
 ## Colaboradores 👨‍👩‍👧‍👦
 
