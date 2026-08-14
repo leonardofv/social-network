@@ -1,5 +1,6 @@
 import { Response, Router } from "express";
 import * as userRepository from '../repositories/user.repository';
+import * as postRepository from '../repositories/post.repository';
 import { authMiddleware, type AuthenticatedRequest } from '../middlewares/auth.middleware';
 import { upload, uploadErrorHandler } from "../middlewares/upload.middleware";
 import path from "path";
@@ -37,6 +38,46 @@ router.get('/search', authMiddleware, async (req: AuthenticatedRequest, res) => 
         res.status(200).json({ message: 'OK', data: users });
 
     } catch(error) {
+        console.log(error);
+        res.status(500).json({ message: 'Algo deu errado' });
+    }
+});
+
+router.get('/:id', authMiddleware, async (req: AuthenticatedRequest, res) => {
+    const id = Number(req.params.id);
+
+    if (!Number.isInteger(id)) {
+        res.status(400).json({ message: 'ID do usuário invalido' });
+        return;
+    }
+    try {
+        const user = await userRepository.findProfileById(id);
+        
+        if (!user) {
+            res.status(404).json({ message: 'Usuário não encontrado' });
+            return;
+        }
+
+        const { email, ...publicProfile } = user;
+        res.status(200).json({ message: 'OK', data: publicProfile });
+    } catch(error) {
+        console.log(error);
+        res.status(500).json({ message: 'Algo deu errado' });
+    }
+});
+
+router.get('/:id/posts', authMiddleware, async (req: AuthenticatedRequest, res) => {
+    const id = Number(req.params.id);
+
+    if (!Number.isInteger(id)) {
+        res.status(400).json({ message: 'ID do usuário invalido' });
+        return;
+    }
+
+    try {
+        const posts = await postRepository.getByUserId(id);
+        res.status(200).json({ message: 'OK', data: posts });
+    }catch(error) {
         console.log(error);
         res.status(500).json({ message: 'Algo deu errado' });
     }
