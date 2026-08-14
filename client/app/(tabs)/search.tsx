@@ -19,6 +19,7 @@ export default function SearchUsers() {
     if (!query.trim()) {
       setResults([]);
       setError('');
+      setLoading(false);
       return;
     }
 
