@@ -1,9 +1,10 @@
 import { UserService, UserSummary } from '@/services/user.service';
 import { useSessionGuard } from '@/hooks/useSessionGuard';
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, FlatList, StyleSheet, Text, TextInput, View } from 'react-native';
+import { ActivityIndicator, FlatList, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { Image } from 'expo-image';
 import { mediaUrl } from '@/services/api';
+import { router } from 'expo-router';
 
 export default function SearchUsers() {
 
@@ -64,7 +65,7 @@ export default function SearchUsers() {
         data={results}
         keyExtractor={(item) => item.id.toString()}
         renderItem={({ item }) => (
-          <View style={styles.row}>
+          <Pressable style={styles.row} onPress={() => router.push(`/user/${item.id}`)}>
             {item.profilePicture ? (
               <Image 
                 source={{ uri: mediaUrl(item.profilePicture) }}
@@ -81,7 +82,7 @@ export default function SearchUsers() {
                 <Text style={styles.name}>{item.name}</Text>
                 <Text style={styles.username}>@{item.username}</Text>
               </View>
-          </View>
+          </Pressable>
         )}
         ListEmptyComponent={
           query.trim() && !loading && !error ? (

@@ -22,6 +22,8 @@ export type UserSummary = {
   profilePicture: string | null;
 };
 
+export type PublicProfile = Omit<UserProfile, 'email'>
+
 export class UserService {
   static getMe(): Promise<UserProfile> {
     return apiData<UserProfile>('/users/me');
@@ -54,5 +56,9 @@ export class UserService {
 
   static searchUsers(query: string): Promise<UserSummary[]> {
     return apiData<UserSummary[]>(`/users/search?q=${encodeURIComponent(query)}`);
+  }
+
+  static getUserById(id: number) {
+    return apiData<PublicProfile>(`/users/${id}`);
   }
 }
