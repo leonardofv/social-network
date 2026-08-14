@@ -50,4 +50,8 @@ export class PostService {
   static getFeed(): Promise<PostWithAuthor[]> {
     return apiData<PostWithAuthor[]>('/posts/feed');
   }
+
+  static getUserPosts(userId: number): Promise<Post[]> {
+    return apiData<Post[]>(`/users/${userId}/posts`);
+  }
 }

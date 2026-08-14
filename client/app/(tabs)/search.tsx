@@ -1,9 +1,10 @@
 import { UserService, UserSummary } from '@/services/user.service';
 import { useSessionGuard } from '@/hooks/useSessionGuard';
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, FlatList, StyleSheet, Text, TextInput, View } from 'react-native';
-import { Image } from 'expo-image';
-import { mediaUrl } from '@/services/api';
+import { ActivityIndicator, FlatList, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { router } from 'expo-router';
+import { Brand } from '@/constants/Colors';
+import { UserAvatar } from '@/components/ui/UserAvatar';
 
 export default function SearchUsers() {
 
@@ -50,7 +51,7 @@ export default function SearchUsers() {
       <TextInput 
         style={styles.input}
         placeholder="Buscar usuários"
-        placeholderTextColor="#888"
+        placeholderTextColor={Brand.textMuted}
         value={query}
         onChangeText={setQuery}
         autoCapitalize="none"
@@ -64,24 +65,13 @@ export default function SearchUsers() {
         data={results}
         keyExtractor={(item) => item.id.toString()}
         renderItem={({ item }) => (
-          <View style={styles.row}>
-            {item.profilePicture ? (
-              <Image 
-                source={{ uri: mediaUrl(item.profilePicture) }}
-                style={styles.avatar}
-                contentFit="cover"
-                cachePolicy="memory-disk"
-              />
-            ) : (
-              <View style={[styles.avatar, styles.avatarPlaceholder]}>
-                <Text style={styles.avatarInitial}>{item.name[0]}</Text>
-              </View>
-            )}
+          <Pressable style={styles.row} onPress={() => router.push(`/user/${item.id}`)}>
+            <UserAvatar name={item.name} picture={item.profilePicture} size={44} />
               <View>
                 <Text style={styles.name}>{item.name}</Text>
                 <Text style={styles.username}>@{item.username}</Text>
               </View>
-          </View>
+          </Pressable>
         )}
         ListEmptyComponent={
           query.trim() && !loading && !error ? (
@@ -94,31 +84,31 @@ export default function SearchUsers() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, paddingTop: 60, paddingHorizontal: 16 },
+  container: { 
+    flex: 1, 
+    paddingTop: 60, 
+    paddingHorizontal: 16,
+    backgroundColor: Brand.background,
+  },
   input: {
-    backgroundColor: '#222',
+    backgroundColor: Brand.surface,
+    borderWidth: 1,
+    borderColor: Brand.border,
     borderRadius: 10,
     paddingHorizontal: 14,
     paddingVertical: 10,
-    color: '#fff',
+    color: Brand.text,
     marginBottom: 12,
   },
   indicator: { marginVertical: 8 },
-  error: { color: '#f66', textAlign: 'center', marginVertical: 8 },
+  error: { color: Brand.error, textAlign: 'center', marginVertical: 8 },
   row: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
     paddingVertical: 10,
   },
-  avatar: { width: 44, height: 44, borderRadius: 22 },
-  avatarPlaceholder: {
-    backgroundColor: '#333',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  avatarInitial: { color: '#fff', fontSize: 18, fontWeight: '600' },
-  name: { color: '#fff', fontWeight: '600' },
-  username: { color: '#888', fontSize: 13 },
-  empty: { color: '#888', textAlign: 'center', marginTop: 24 },
+  name: { color: Brand.text, fontFamily: 'LatoBold' },
+  username: { color: Brand.textMuted, fontFamily: 'Lato', fontSize: 13 },
+  empty: { color: Brand.textMuted, fontFamily: 'Lato', textAlign: 'center', marginTop: 24 },
 });

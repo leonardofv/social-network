@@ -51,7 +51,8 @@ export default function RootLayout() {
           <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
           <Stack.Screen name="+not-found" />
           <Stack.Screen name="edit-profile" options={{ title: 'Editar Perfil' }} />
-          <Stack.Screen name="post/[id]" options={{ title: 'Publicação' }}/>
+          <Stack.Screen name="post/[id]" options={{ title: 'Publicação' }} />
+          <Stack.Screen name="user/[id]" options={{ title: 'Perfil' }} />
         </Stack>
         <StatusBar style="auto" />
       </ThemeProvider>
