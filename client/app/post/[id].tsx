@@ -100,6 +100,26 @@ export default function PostDetailScreen() {
     }
   };
 
+  const toggleLike = async () => {
+    if (!post) return;
+    const liked = post.likedByMe;
+    setPost({
+      ...post,
+      likedByMe: !liked,
+      likeCount: post.likeCount + (liked ? -1 : 1),
+    });
+    try {
+      if (liked) {
+        await PostService.unlike(postId);
+      } else {
+        await PostService.like(postId);
+      }
+    } catch (err) {
+      if (await handleSessionExpired(err)) return;
+      setPost(post); // reverte para o estado anterior ao toque
+    }
+  };
+
   const deletePost = async () => {
     setDeleting(true);
     try {
@@ -184,6 +204,21 @@ export default function PostDetailScreen() {
               style={styles.image}
               contentFit="cover"
             />
+            <View style={styles.likeRow}>
+              <Pressable
+                onPress={toggleLike}
+                hitSlop={8}
+                accessibilityRole="button"
+                accessibilityLabel={post.likedByMe ? 'Descurtir' : 'Curtir'}
+              >
+                <Ionicons
+                  name={post.likedByMe ? 'heart' : 'heart-outline'}
+                  size={24}
+                  color={post.likedByMe ? Brand.primary : Brand.text}
+                />
+              </Pressable>
+              <Text style={styles.likeCount}>{post.likeCount}</Text>
+            </View>
             {post.description && (
               <Text style={styles.description}>{post.description}</Text>
             )}
@@ -228,6 +263,18 @@ const styles = StyleSheet.create({
   image: {
     width: '100%',
     aspectRatio: 1,
+  },
+  likeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 12,
+    paddingTop: 8,
+  },
+  likeCount: {
+    fontFamily: 'LatoBold',
+    fontSize: 14,
+    color: Brand.text,
   },
   description: {
     fontFamily: 'Lato',
