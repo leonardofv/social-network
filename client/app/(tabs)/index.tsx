@@ -3,6 +3,7 @@ import { Brand } from '@/constants/Colors';
 import { useSessionGuard } from '@/hooks/useSessionGuard';
 import { mediaUrl } from '@/services/api';
 import { PostService, PostWithAuthor } from '@/services/post.service';
+import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useState } from 'react';
@@ -44,6 +45,22 @@ export default function HomeScreen() {
     }, [loadFeed]),
   );
 
+  const toggleLike = async (post: PostWithAuthor) => {
+    const liked = post.likedByMe;
+    setPosts((prev) => prev.map((p) => p.id === post.id ? { ...p, likedByMe: !liked, likeCount: p.likeCount + (liked ? -1 : 1)} : p ));
+
+    try {
+      if (liked) {
+        await PostService.unlike(post.id);
+      } else {
+        await PostService.like(post.id);
+      }
+    } catch(error) {
+        if (await handleSessionExpired(error)) return;
+        loadFeed(); 
+      }
+  };
+
   return (
     <FlatList
       style={styles.container}
@@ -68,6 +85,21 @@ export default function HomeScreen() {
               <Text style={styles.description}>{item.description}</Text>
             ) : null}
           </Pressable>
+          <View style={styles.likeRow}>
+            <Pressable 
+            onPress={() => toggleLike(item)} 
+            hitSlop={8} 
+            accessibilityRole="button" 
+            accessibilityLabel={item.likedByMe ? 'Descurtir' : 'Curtir'}
+            >
+              <Ionicons 
+                name={item.likedByMe ? 'heart' : 'heart-outline'}
+                size={24}
+                color={item.likedByMe ? Brand.primary : Brand.text}
+              />
+            </Pressable>
+            <Text style={styles.likeCount}>{item.likeCount}</Text>
+          </View>
         </View>
       )}
       ListEmptyComponent={
@@ -130,5 +162,17 @@ const styles = StyleSheet.create({
   },
   messageError: {
     color: Brand.error,
+  },
+  likeRow: {
+  flexDirection: 'row',
+  alignItems: 'center',
+  gap: 6,
+  paddingHorizontal: 12,
+  paddingTop: 8,
+  },
+  likeCount: {
+    fontFamily: 'LatoBold',
+    fontSize: 14,
+    color: Brand.text,
   },
 });
