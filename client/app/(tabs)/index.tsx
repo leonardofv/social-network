@@ -99,6 +99,14 @@ export default function HomeScreen() {
               />
             </Pressable>
             <Text style={styles.likeCount}>{item.likeCount}</Text>
+            <Pressable
+              onPress={() => router.push(`/post/${item.id}`)}
+              hitSlop={8}
+              accessibilityRole="button"
+              accessibilityLabel="Ver comentários"
+            >
+              <Ionicons name="chatbubble-outline" size={24} color={Brand.text}/>
+            </Pressable>
           </View>
         </View>
       )}
