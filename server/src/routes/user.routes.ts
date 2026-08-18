@@ -1,6 +1,7 @@
 import { Response, Router } from "express";
 import * as userRepository from '../repositories/user.repository';
 import * as postRepository from '../repositories/post.repository';
+import * as followRepository from '../repositories/follow.repository';
 import { authMiddleware, type AuthenticatedRequest } from '../middlewares/auth.middleware';
 import { upload, uploadErrorHandler } from "../middlewares/upload.middleware";
 import path from "path";
@@ -165,6 +166,54 @@ router.delete('/me/picture', authMiddleware, async (req: AuthenticatedRequest, r
     } catch(error) {
         console.log(error);
         res.status(500).json({ message: 'Something went wrong 😢❌' });
+    }
+});
+
+// seguir usuário
+router.post('/:id/follow', authMiddleware, async (req: AuthenticatedRequest, res) => {
+    const followedId = Number(req.params.id);
+
+    if (!Number.isInteger(followedId)) {
+        res.status(400).json({ message: 'ID do usuário invalido' });
+        return;
+    }
+
+    if (followedId === req.userId) {
+        res.status(400).json({ message: 'você não pode seguir a si mesmo' });
+        return;
+    }
+    
+    try {
+        const user = await userRepository.findProfileById(followedId);
+
+        if (!user) {
+            res.status(404).json({ message: 'Usuário não encontrado' });
+            return;
+        }
+
+        await followRepository.follow(req.userId!, followedId);
+        res.status(200).json({ message: 'OK', data: null });
+    } catch(error) {
+        console.log(error);
+        res.status(500).json({ message: 'Algo deu errado' });
+    }
+});
+
+//deixar de seguir
+router.delete('/:id/follow', authMiddleware, async (req: AuthenticatedRequest, res) => {
+    const followedId = Number(req.params.id);
+
+    if (!Number.isInteger(followedId)) {
+        res.status(400).json({ message: 'ID do usuário invalido' });
+        return;
+    }
+
+    try {
+        await followRepository.unfollow(req.userId!, followedId);
+        res.status(200).json({ message: 'OK', data: null });
+    } catch(error) {
+        console.log(error);
+        res.status(500).json({ message: 'Algo deu errado' });
     }
 });
 
