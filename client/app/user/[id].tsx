@@ -1,5 +1,7 @@
+import { PrimaryButton } from '@/components/ui/PrimaryButton';
 import { UserAvatar } from '@/components/ui/UserAvatar';
 import { Brand } from '@/constants/Colors';
+import { useCurrentUser } from '@/contexts/UserContext';
 import { useSessionGuard } from '@/hooks/useSessionGuard';
 import { mediaUrl } from '@/services/api';
 import { Post, PostService } from '@/services/post.service';
@@ -36,8 +38,32 @@ export default function UserDetailScreen() {
   const router = useRouter();
   const { width: windowWidth } = useWindowDimensions();
   const contentWidth = Math.min(windowWidth, MAX_CONTENT_WIDTH);
-  const gridItemSize =
-    (contentWidth - GRID_GAP * (GRID_COLUMNS - 1)) / GRID_COLUMNS;
+  const gridItemSize = (contentWidth - GRID_GAP * (GRID_COLUMNS - 1)) / GRID_COLUMNS;
+
+  const { user: currentUser } = useCurrentUser();
+  const isOwnProfile = currentUser?.id === userId;
+
+  const toggleFollow = async () => {
+    if (!profile) return;
+    
+    const wasFollowing = profile.isFollowing;
+    setProfile({
+      ...profile,
+      isFollowing: !wasFollowing,
+      followersCount: profile.followersCount + (wasFollowing ? -1 : 1),
+    });
+
+    try {
+      if (wasFollowing) {
+        await UserService.unfollow(userId);
+      } else {
+        await UserService.follow(userId);
+      }
+    } catch(error) {
+      if (await handleSessionExpired(error)) return;
+      setProfile(profile);
+    }
+  }
 
   useEffect(() => {
     Promise.all([
@@ -108,6 +134,12 @@ export default function UserDetailScreen() {
               <Text style={styles.username}>{profile.username}</Text>
             </View>
           </View>
+          {!isOwnProfile && (
+            <PrimaryButton 
+              title={profile.isFollowing ? 'Deixar de seguir' : 'Seguir'}
+              onPress={toggleFollow}
+            />
+          )}
           {profile.bio && <Text style={styles.bio}>{profile.bio}</Text>}
         </View>
       }
