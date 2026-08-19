@@ -59,8 +59,18 @@ router.get('/:id', authMiddleware, async (req: AuthenticatedRequest, res) => {
             return;
         }
 
+        const [ isFollowing, followCounts ] = await Promise.all([
+            followRepository.isFollowing(req.userId!, id),
+            followRepository.getFollowCounts(id),
+        ]);
+
         const { email, ...publicProfile } = user;
-        res.status(200).json({ message: 'OK', data: publicProfile });
+        res.status(200).json({ message: 'OK', data: {
+            ...publicProfile,
+            isFollowing,
+            followersCount: followCounts.followersCount,
+            followingCount: followCounts.followingCount,
+        } });
     } catch(error) {
         console.log(error);
         res.status(500).json({ message: 'Algo deu errado' });
