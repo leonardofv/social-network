@@ -179,7 +179,7 @@ export default function ProfileScreen() {
         data={posts}
         keyExtractor={(item) => item.id.toString()}
         numColumns={GRID_COLUMNS}
-        columnWrapperStyle={styles.gridRow}
+        columnWrapperStyle={[styles.gridRow, { width: contentWidth }]}
         ItemSeparatorComponent={() => <View style={styles.gridSeparator} />}
         renderItem={({ item }) => (
           <Pressable onPress={() => router.push(`/post/${item.id}`)}>

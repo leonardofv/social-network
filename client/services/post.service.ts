@@ -12,6 +12,8 @@ export type PostWithAuthor = Post & {
   authorUsername: string;
   authorName: string;
   authorProfilePicture: string | null;
+  likeCount: number;
+  likedByMe: boolean;
 }
 
 export class PostService {
@@ -53,5 +55,18 @@ export class PostService {
 
   static getUserPosts(userId: number): Promise<Post[]> {
     return apiData<Post[]>(`/users/${userId}/posts`);
+  }
+
+  static like(postId: number): Promise<void> {
+    return apiFetch(`/posts/${postId}/like`, {
+      method: 'POST',
+      errors: { 404: 'Esse post não existe' },
+    });
+  }
+
+  static unlike(postId: number): Promise<void> {
+    return apiFetch(`/posts/${postId}/like`, { 
+      method: 'DELETE' 
+    });
   }
 }

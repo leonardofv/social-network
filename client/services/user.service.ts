@@ -22,7 +22,11 @@ export type UserSummary = {
   profilePicture: string | null;
 };
 
-export type PublicProfile = Omit<UserProfile, 'email'>
+export type PublicProfile = Omit<UserProfile, 'email'> & {
+  isFollowing: boolean;
+  followersCount: number;
+  followingCount: number;
+}
 
 export class UserService {
   static getMe(): Promise<UserProfile> {
@@ -60,5 +64,17 @@ export class UserService {
 
   static getUserById(id: number) {
     return apiData<PublicProfile>(`/users/${id}`);
+  }
+
+  static follow(userId: number): Promise<void> {
+    return apiFetch(`/users/${userId}/follow`, {
+      method: 'POST'
+    });
+  }
+
+  static unfollow(userId: number): Promise<void> {
+    return apiFetch(`/users/${userId}/follow`, {
+      method: 'DELETE'
+    });
   }
 }

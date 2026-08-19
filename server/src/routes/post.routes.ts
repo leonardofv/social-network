@@ -1,6 +1,7 @@
 import { Response, Router } from 'express';
 import * as postRepository from '../repositories/post.repository';
 import * as commentRepository from '../repositories/comment.repository';
+import * as likeRepository from '../repositories/like.repository';
 import { authMiddleware, type AuthenticatedRequest } from '../middlewares/auth.middleware';
 import { removeUpload, upload, uploadErrorHandler } from '../middlewares/upload.middleware';
 
@@ -43,7 +44,7 @@ router.get('/', authMiddleware, async (req:AuthenticatedRequest, res) => {
 //List all Posts - feed
 router.get('/feed', authMiddleware, async (req: AuthenticatedRequest, res) => {
   try {
-    const posts = await postRepository.getAll();
+    const posts = await postRepository.getAll(req.userId!);
     res.status(200).json({ message: 'OK', data: posts });
   } catch (error) {
     console.log(error);
@@ -53,7 +54,7 @@ router.get('/feed', authMiddleware, async (req: AuthenticatedRequest, res) => {
 
 router.get('/:id', authMiddleware, async (req:AuthenticatedRequest, res) => {
   try {
-    const post = await postRepository.getById(Number(req.params.id));
+    const post = await postRepository.getById(Number(req.params.id), req.userId!);
 
     if (!post) {
       res.status(404).json({ message: 'Post não encontrado' });
@@ -61,6 +62,47 @@ router.get('/:id', authMiddleware, async (req:AuthenticatedRequest, res) => {
     }
     res.status(200).json({ message: 'Ok', data: post });
   } catch (error) {
+    console.log(error);
+    res.status(500).json({ message: 'Algo deu errado' });
+  }
+});
+
+router.post('/:id/like', authMiddleware, async (req: AuthenticatedRequest, res) => {
+  const postId = Number(req.params.id);
+
+  if (!Number.isInteger(postId)) {
+    res.status(400).json({ message: 'id de post Inválido' });
+    return;
+  }
+
+  try {
+    const post = await postRepository.getById(postId, req.userId!);
+
+    if (!post) {
+      res.status(404).json({ message: 'Post não encontrado' });
+      return;
+    }
+
+    await likeRepository.add(postId, req.userId!);
+    res.status(200).json({ message: 'OK', data: null });
+  } catch(error) {
+    console.log(error);
+    res.status(500).json({ message: 'Algo deu errado' });
+  }
+});
+
+router.delete('/:id/like', authMiddleware, async (req: AuthenticatedRequest, res) => {
+  const postId = Number(req.params.id);
+
+  if (!Number.isInteger(postId)) {
+    res.status(404).json({ message: 'Id de post inválido' });
+    return;
+  }
+
+  try {
+    await likeRepository.remove(postId, req.userId!);
+    res.status(200).json({ message: 'OK', data: null });
+  } catch(error) {
     console.log(error);
     res.status(500).json({ message: 'Algo deu errado' });
   }
@@ -75,7 +117,7 @@ router.delete('/:id', authMiddleware, async (req:AuthenticatedRequest, res) => {
   }
 
   try {
-    const post = await postRepository.getById(postId);
+    const post = await postRepository.getById(postId, req.userId!);
 
     if (!post) {
       res.status(404).json({ message: 'Post não encontrado' });
@@ -136,7 +178,7 @@ router.post('/:id/comments', authMiddleware, async (req:AuthenticatedRequest, re
   }
 
   try {
-    const post = await postRepository.getById(postId);
+    const post = await postRepository.getById(postId, req.userId!);
 
     if (!post) {
       res.status(404).json({ message: 'Post não encontrado' });

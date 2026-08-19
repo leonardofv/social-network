@@ -13,6 +13,8 @@ type PostWithAuthor = Post & {
   authorUsername: string;
   authorName: string;
   authorProfilePicture: string | null;
+  likeCount: number;
+  likedByMe: boolean;
 }
 
 export const create = async ({
@@ -34,7 +36,7 @@ export const create = async ({
   };
 };
 
-export const getAll = async (): Promise<PostWithAuthor[]> => {
+export const getAll = async (currentUserId: number): Promise<PostWithAuthor[]> => {
   return db
     .column('post.id', 'post.path', 'post.description', {
       publishDate: 'post.publish_date',
@@ -42,6 +44,8 @@ export const getAll = async (): Promise<PostWithAuthor[]> => {
       authorUsername: 'users.username',
       authorName: 'user_profile.name',
       authorProfilePicture: 'user_profile.profile_picture',
+      likeCount: db.raw('(select count(*)::int from post_like where post_like.post_id = post.id)'),
+      likedByMe: db.raw('exists(select 1 from post_like where post_like.post_id = post.id and post_like.user_id = ?)', [currentUserId]),
     })
     .select()
     .from('post')
@@ -50,7 +54,7 @@ export const getAll = async (): Promise<PostWithAuthor[]> => {
     .orderBy('post.publish_date', 'desc');
 };
 
-export const getById = async (id: number): Promise<PostWithAuthor | undefined> => {
+export const getById = async (id: number, currentUserId: number): Promise<PostWithAuthor | undefined> => {
   return db
     .column('post.id', 'post.path', 'post.description', {
       publishDate: 'post.publish_date',
@@ -58,6 +62,8 @@ export const getById = async (id: number): Promise<PostWithAuthor | undefined> =
       authorUsername: 'users.username',
       authorName: 'user_profile.name',
       authorProfilePicture: 'user_profile.profile_picture',
+      likeCount: db.raw('(select count(*)::int from post_like where post_like.post_id = post.id)'),
+      likedByMe: db.raw('exists(select 1 from post_like where post_like.post_id = post.id and post_like.user_id = ?)', [currentUserId]),
     })
     .select()
     .from('post')
